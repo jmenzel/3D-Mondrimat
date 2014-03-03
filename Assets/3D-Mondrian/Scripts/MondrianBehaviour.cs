@@ -62,7 +62,6 @@ namespace Assets
             transform.position = new Vector3(position.x - (scale.x / 4), position.y, position.z);
 
 
-            
             var newPosition = new Vector3(position.x + (scale.x / 4), position.y, position.z);
             var o = Instantiate(MonCube, newPosition, transform.rotation) as GameObject;
 
