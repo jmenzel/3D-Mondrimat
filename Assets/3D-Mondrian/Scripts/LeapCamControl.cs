@@ -11,7 +11,7 @@ public class LeapCamControl : MonoBehaviour {
     public float MoveSpeed = 0.5f;
     public float HandHeightStart = 2f;
     public float SmoothLerpFactor = 0.2f;
-
+    public float CamZoomOffset = 2;
 
 	// Use this for initialization
 	void Start () 
@@ -56,16 +56,16 @@ public class LeapCamControl : MonoBehaviour {
             //float forceMult = 20.0f;
 
             // if closed fist, then stop the plane and slowly go backwards.
-            
 
+            //Debug.Log(handDiff.x + " | " + handDiff.y + " | " + handDiff.z);
 
-            //Debug.Log("x:" + avgPos.x + " -- y:" + avgPos.y + " -- z:" + avgPos.z);
 
             transform.RotateAround(DirectedTo.transform.position, new Vector3(0, 1, 0), newRot.z / 100 * MoveSpeed);   //MoveSpeed * Time.deltaTime);
 
-            float pos = avgPos.y - HandHeightStart;
+            float posY = ((avgPos.y - HandHeightStart) + transform.position.y) / 2;
+            float posZ = transform.position.z;// (handDiff.x + CamZoomOffset + transform.position.z) / 2;
 
-            Vector3 newPosition = new Vector3(transform.position.x, (transform.position.y + pos) / 2, transform.position.z);
+            Vector3 newPosition = new Vector3(transform.position.x, posY, (posZ));
 
             transform.position = Vector3.Lerp(transform.position, newPosition, SmoothLerpFactor);
 
