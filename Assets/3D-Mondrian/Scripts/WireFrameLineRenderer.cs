@@ -8,6 +8,7 @@ public class WireFrameLineRenderer : MonoBehaviour
     //****************************************************************************************
     //  Material options
     //****************************************************************************************
+    public float lineWidth;
     public Color LineColor;
     //public bool ZWrite = true;
     //public bool AWrite = true;
@@ -151,16 +152,41 @@ public class WireFrameLineRenderer : MonoBehaviour
 
         GL.PushMatrix();
         GL.MultMatrix(transform.localToWorldMatrix);
-        GL.Begin(GL.LINES);
         GL.Color(LineColor);
 
-        foreach (Line line in LinesArray)
+        if (lineWidth == 1F)
         {
-            GL.Vertex(line.PointA);
-            GL.Vertex(line.PointB);
+            GL.Begin(GL.LINES);
+
+            foreach (Line line in LinesArray)
+            {
+                GL.Vertex(line.PointA);
+                GL.Vertex(line.PointB);
+            }
+        }
+        else
+        {
+            GL.Begin(GL.QUADS);
+            foreach (Line line in LinesArray)
+            {
+                DrawQuad(line.PointA, line.PointB);
+            }
         }
 
         GL.End();
         GL.PopMatrix();
+    }
+
+    public void DrawQuad(Vector3 p1, Vector3 p2)
+    {
+        var thisWidth = 1.0F/Screen.width * lineWidth * .5F;
+        var edge1 = (p2 + p1); // Camera.main.transform.position - (p2 + p1) / 2.0F;	//vector from line center to camera
+        var edge2 = p2-p1;	//vector from point to point
+        var perpendicular = Vector3.Cross(edge1,edge2).normalized * thisWidth;
+ 
+        GL.Vertex(p1 - perpendicular);
+        GL.Vertex(p1 + perpendicular);
+        GL.Vertex(p2 + perpendicular);
+        GL.Vertex(p2 - perpendicular);
     }
 }
