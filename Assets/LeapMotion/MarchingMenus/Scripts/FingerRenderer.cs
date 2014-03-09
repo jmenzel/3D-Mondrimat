@@ -17,7 +17,9 @@ public class FingerRenderer : MonoBehaviour {
 		{
 			finger.SetActive(true);
 
-			finger.transform.localPosition = new Vector3(
+            finger.transform.rotation = Camera.main.transform.rotation;
+
+			finger.transform.localPosition = Camera.main.transform.position +  new Vector3(
 				_leapManager.pointerPositionScreenToWorld.x,
 				_leapManager.pointerPositionScreenToWorld.y,
 				finger.transform.localPosition.z);

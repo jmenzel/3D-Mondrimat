@@ -10,7 +10,9 @@ public class FingerControl : MonoBehaviour
     public float PointerMaxZ = -10;
     public float PointerMinZ = -6;
     public float PointerMaxY = 20;
+    public float PointerYOffset = -9;
     float PointerZOffset;
+    public GameObject directedTo;
 
 	// Use this for initialization
 	void Start () 
@@ -33,6 +35,8 @@ public class FingerControl : MonoBehaviour
 	// Update is called once per frame
     void FixedUpdate()
     {
+        if (_leap == null) return;
+
         Frame frame = _leap.Frame();
         HandleGestures(frame.Gestures());
 
@@ -57,20 +61,50 @@ public class FingerControl : MonoBehaviour
 
             //Perform action
             var calcedPos = finger.TipPosition.ToUnityScaled();
+
             calcedPos.z = calcedPos.z + PointerZOffset;
 
             var avgZ = (calcedPos.z < PointerMaxZ) ? PointerMaxZ : (calcedPos.z > PointerMinZ) ? PointerMinZ : calcedPos.z;
 
-            var newPos = new Vector3(calcedPos.x, calcedPos.y, avgZ);
+            var newPos = new Vector3(calcedPos.x, calcedPos.y + PointerYOffset, avgZ);
 
-            Pointer.transform.position = Vector3.Lerp(Pointer.transform.position, newPos, 0.3F);
+            Pointer.transform.position = Vector3.Lerp(Pointer.transform.position, newPos, 0.5F);
+
+
+
+            //var stwp = Camera.main.ScreenToWorldPoint(Pointer.transform.position);
+            var wtsp = Camera.main.WorldToScreenPoint(Pointer.transform.position);
+            //var wtvp = Camera.main.WorldToViewportPoint(Pointer.transform.position);
+            //var vtwp = Camera.main.ViewportToWorldPoint(Pointer.transform.position);
+
+            var sptr = Camera.main.ScreenPointToRay(wtsp).GetPoint(1f);
+
+
+            var scrX = UnityEngine.Screen.width - wtsp.x;
+            var scrY = UnityEngine.Screen.height - wtsp.y;
+            var scrZ = Camera.main.transform.position.z;
+
+            Debug.Log(UnityEngine.Screen.width + " : " + UnityEngine.Screen.height);
+            Debug.Log("x: " + sptr.x + ", y: " + sptr.y + ", z: " + sptr.z);
+
+
+            RaycastHit hit;
+            if (Physics.Raycast(new Vector3(wtsp.x, wtsp.y, scrZ), Vector3.forward, out hit))
+            {
+                float distanceToGround = hit.distance;
+
+                Debug.Log("I Hit something =)");
+
+            }
+
+            //Debug.Log("STWP: " + stwp);
+            //Debug.Log("WTSP: " + wtsp);
+            //Debug.Log("WTVP: " + wtvp);
+            //Debug.Log("VTWP: " + vtwp);
+        
+        
         }
     }
-
-
-
-
-
 
 
 
