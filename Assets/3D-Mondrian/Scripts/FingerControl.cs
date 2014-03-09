@@ -6,13 +6,14 @@ public class FingerControl : MonoBehaviour
 {
 
     Controller _leap;
-    public GameObject Pointer;
+    public GameObject pointer;
     public float PointerMaxZ = -10;
     public float PointerMinZ = -6;
     public float PointerMaxY = 20;
     public float PointerYOffset = -9;
     float PointerZOffset;
-    public GameObject directedTo;
+    private GameObject _lastHittedObject;
+    private GameObject[] _pointer;
 
 	// Use this for initialization
 	void Start () 
@@ -29,7 +30,13 @@ public class FingerControl : MonoBehaviour
         _leap.EnableGesture(Gesture.GestureType.TYPESWIPE);
         _leap.EnableGesture(Gesture.GestureType.TYPEINVALID);
 
-        PointerZOffset = Pointer.transform.position.z;
+        PointerZOffset = pointer.transform.position.z;
+
+        _pointer = new GameObject[]
+        {
+            Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject,
+            Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject
+        };
 	}
 	
 	// Update is called once per frame
@@ -38,25 +45,54 @@ public class FingerControl : MonoBehaviour
         if (_leap == null) return;
 
         Frame frame = _leap.Frame();
-        HandleGestures(frame.Gestures());
 
-        HandleFrontFinger((frame.Fingers.Count > 0 && frame.Hands.Count < 2) ? frame.Fingers.Frontmost : null);
+        if(frame.Fingers.Count > 0 && frame.Fingers.Count < 2 && frame.Hands.Count == 1)
+        {
+            var finger = frame.Fingers.Frontmost;
+            if (finger != null)
+            {
+                HandleFinger(finger, _pointer[0]);
+            }
+            else
+            {
+                _pointer[0].SetActive(false);
+            }
+            _pointer[1].SetActive(false);
+        }
+        else if (frame.Fingers.Count > 0 && frame.Fingers.Count < 3 && frame.Hands.Count == 2)
+        {
+            var fingerLeft = frame.Fingers.Leftmost;
+            var fingerRight = frame.Fingers.Rightmost;
+
+            if (fingerLeft != null) HandleFinger(fingerLeft, _pointer[0]);
+            if (fingerRight != null) HandleFinger(fingerRight, _pointer[1]);
+        }
+        else
+        {
+            _pointer[0].SetActive(false);
+            _pointer[1].SetActive(false);
+        }
+
+
+        //HandleFrontFinger((frame.Fingers.Count > 0 && frame.Hands.Count < 2) ? frame.Fingers.Frontmost : null);
+        HandleGestures(frame.Gestures());
+        
 	}
 
-    private void HandleFrontFinger(Finger finger)
+    private void HandleFinger(Finger finger, GameObject pointer)
     {
         if (finger == null)
         {
-            if (Pointer.activeSelf)
+            if (pointer.activeSelf)
             {
-                Pointer.SetActive(false);
+                pointer.SetActive(false);
             }
         }
         else
         {
-            if (!Pointer.activeSelf)
+            if (!pointer.activeSelf)
             {
-                Pointer.SetActive(true);
+                pointer.SetActive(true);
             }
 
             //Perform action
@@ -68,40 +104,38 @@ public class FingerControl : MonoBehaviour
 
             var newPos = new Vector3(calcedPos.x, calcedPos.y + PointerYOffset, avgZ);
 
-            Pointer.transform.position = Vector3.Lerp(Pointer.transform.position, newPos, 0.5F);
+            pointer.transform.position = Vector3.Lerp(pointer.transform.position, newPos, 0.5F);
 
-
-
-            //var stwp = Camera.main.ScreenToWorldPoint(Pointer.transform.position);
-            var wtsp = Camera.main.WorldToScreenPoint(Pointer.transform.position);
-            //var wtvp = Camera.main.WorldToViewportPoint(Pointer.transform.position);
-            //var vtwp = Camera.main.ViewportToWorldPoint(Pointer.transform.position);
-
-            var sptr = Camera.main.ScreenPointToRay(wtsp).GetPoint(1f);
-
-
-            var scrX = UnityEngine.Screen.width - wtsp.x;
-            var scrY = UnityEngine.Screen.height - wtsp.y;
-            var scrZ = Camera.main.transform.position.z;
-
-            Debug.Log(UnityEngine.Screen.width + " : " + UnityEngine.Screen.height);
-            Debug.Log("x: " + sptr.x + ", y: " + sptr.y + ", z: " + sptr.z);
-
-
+            
             RaycastHit hit;
-            if (Physics.Raycast(new Vector3(wtsp.x, wtsp.y, scrZ), Vector3.forward, out hit))
+            Ray directionRay = new Ray(pointer.transform.position, Vector3.forward);
+            Debug.DrawRay(pointer.transform.position, Vector3.forward * 10);
+            if (Physics.Raycast(directionRay, out hit, 10))
             {
                 float distanceToGround = hit.distance;
 
-                Debug.Log("I Hit something =)");
+                var newHittedObject = hit.collider.gameObject;
 
+                if (newHittedObject == null) return;
+                if (newHittedObject.tag != "Menu") return;
+
+                if (newHittedObject != _lastHittedObject)
+                {
+                    if (_lastHittedObject != null)
+                    {
+
+                        _lastHittedObject.GetComponent<WireFrameLineRenderer>().enabled = false;
+                    }
+
+                    newHittedObject.GetComponent<WireFrameLineRenderer>().enabled = true;
+
+                    _lastHittedObject = newHittedObject;
+
+                    Debug.Log("I Hit something =): " + newHittedObject.ToString() + " - " + newHittedObject.tag);
+                }
             }
 
-            //Debug.Log("STWP: " + stwp);
-            //Debug.Log("WTSP: " + wtsp);
-            //Debug.Log("WTVP: " + wtvp);
-            //Debug.Log("VTWP: " + vtwp);
-        
+       
         
         }
     }

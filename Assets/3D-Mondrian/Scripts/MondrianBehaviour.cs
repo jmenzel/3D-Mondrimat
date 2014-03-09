@@ -59,15 +59,11 @@ namespace Assets
             var position = transform.position;
 
             transform.localScale = new Vector3(scale.x / 2, scale.y, scale.z);
-            //transform.position = new Vector3(position.x - (scale.x / 4), position.y, position.z);
-
-            //var newPosition = new Vector3(position.x + (scale.x / 4), position.y, position.z);
             var o = Instantiate(MonCube, transform.position, transform.rotation) as GameObject;
 
             transform.Translate(Vector3.left * (scale.x / 4));
             o.transform.Translate(Vector3.right * (scale.x / 4));
             
-            //o.transform.position = newPosition;
             o.transform.parent = transform.parent;
 
             if (o != null) o.renderer.material.color = _supportedColors[0];
@@ -80,15 +76,11 @@ namespace Assets
 
             transform.localScale = new Vector3(scale.x, (scale.y / 2), scale.z);
 
-            //var newPosition = new Vector3(position.x, position.y - (scale.y / 4), position.z);
             var o = Instantiate(MonCube, transform.position, transform.rotation) as GameObject;
-
-            //transform.position = new Vector3(position.x, position.y + (scale.y / 4), position.z);
 
             transform.Translate(Vector3.up * (scale.y / 4));
             o.transform.Translate(Vector3.down * (scale.y / 4));
 
-            //o.transform.position = newPosition;
             o.transform.parent = transform.parent;
 
             if (o != null) o.renderer.material.color = _supportedColors[0];

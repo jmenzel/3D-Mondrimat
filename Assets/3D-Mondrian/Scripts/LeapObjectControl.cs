@@ -36,7 +36,7 @@ public class LeapObjectControl : MonoBehaviour
 
         if (frame.Hands.Count >= 2)
         {
-            if (frame.Fingers.Count < 3)
+            if (frame.Fingers.Count < 4)
             {
                 return;
             }
@@ -62,14 +62,6 @@ public class LeapObjectControl : MonoBehaviour
 
             _rotationEuler = _rotationEuler + new Vector3(0, (newRot.z / 100) * MoveSpeed, 0);
             gameObject.transform.eulerAngles = new Vector3(_rotationEuler.x % 360, _rotationEuler.y % 360, _rotationEuler.z % 360);
-
-
-            //gameObject.transform.rotation.eulerAngles.y
-            //gameObject.transform.rotation = Quaternion.Euler(new Vector3(0, transform.rotation.eulerAngles.z + (newRot.z / 100) * MoveSpeed, 0));
-            //gameObject.transform.Rotate(Vector3.up, (newRot.z / 100) * MoveSpeed, Space.Self);
-
-            //Debug.Log(handDiff.x + " | " + handDiff.y + " | " + handDiff.z);
-
         }
 
     }
