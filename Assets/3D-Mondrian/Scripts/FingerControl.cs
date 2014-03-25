@@ -39,7 +39,7 @@ namespace Assets.Scripts
             _pointer = new[]
             {
                 Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject,
-                Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject
+                //Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject
             };
         }
 	
@@ -49,7 +49,7 @@ namespace Assets.Scripts
             if (_leap == null) return;
 
             var frame = _leap.Frame();
-
+/*
             if(frame.Fingers.Count > 0 && frame.Fingers.Count < 2 && frame.Hands.Count == 1)
             {
                 var finger = frame.Fingers.Frontmost;
@@ -61,21 +61,21 @@ namespace Assets.Scripts
                 {
                     _pointer[0].SetActive(false);
                 }
-                _pointer[1].SetActive(false);
+                //_pointer[1].SetActive(false);
             }
             else if (frame.Fingers.Count > 0 && frame.Fingers.Count < 3 && frame.Hands.Count == 2)
             {
                 var fingerLeft = frame.Fingers.Leftmost;
-                var fingerRight = frame.Fingers.Rightmost;
+                //var fingerRight = frame.Fingers.Rightmost;
 
                 if (fingerLeft != null) HandleFinger(fingerLeft, _pointer[0]);
-                if (fingerRight != null) HandleFinger(fingerRight, _pointer[1]);
+                //if (fingerRight != null) HandleFinger(fingerRight, _pointer[1]);
             }
             else
             {
                 _pointer[0].SetActive(false);
-                _pointer[1].SetActive(false);
-            }
+               // _pointer[1].SetActive(false);
+            }*/
 
 
             //HandleFrontFinger((frame.Fingers.Count > 0 && frame.Hands.Count < 2) ? frame.Fingers.Frontmost : null);
