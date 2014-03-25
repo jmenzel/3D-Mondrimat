@@ -149,7 +149,8 @@ namespace Assets.Scripts
                 switch (gesture.Type)
                 {
                     case Gesture.GestureType.TYPECIRCLE:
-                        if (gesture.State != Gesture.GestureState.STATESTOP) continue;
+                        if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID) continue;
+                        
                         var circle = new CircleGesture(gesture);
 
                         var circleCenter = circle.Center.ToUnityScaled();

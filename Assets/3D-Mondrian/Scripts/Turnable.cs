@@ -17,6 +17,8 @@ public class Turnable : MonoBehaviour, ITurnable
 
     public float smoothPositionChangeFactor = 1f;
 
+    private bool circleInProgress = false;
+
     public void TurnCounterClockwise()
     {
         throw new System.NotImplementedException();
@@ -25,6 +27,9 @@ public class Turnable : MonoBehaviour, ITurnable
 
     public void TurnClockwise()
     {
+        if (circleInProgress) return;
+        circleInProgress = true;
+
         var tmpArray = new GameObject[turnees.Length];
         tmpArray[0] = turnees[turnees.Length - 1];
 
@@ -35,26 +40,31 @@ public class Turnable : MonoBehaviour, ITurnable
 
         turnees = tmpArray;
 
-        foreach (var turnee in turnees)
+        /*foreach (var turnee in turnees)
         {
             turnee.transform.localScale = SmallSize;
-        }
+        }*/
 
         for (var i = 0; i < turnees.Length; ++i)
         {
-            StartCoroutine(MoveToPosition(turnees[i].transform, positions[i], smoothPositionChangeFactor, (transf, endPosition) =>
-            {
-                /*if (endPosition == positions[0])
+            StartCoroutine(MoveToPosition(turnees[i].transform, positions[i], smoothPositionChangeFactor,
+                (transf) =>
                 {
-                    transf.localScale = BigSize;
-                }*/
-
-                if (transf.parent.name == turnees[0].name)
+                    transf.localScale = SmallSize;
+                },
+                (transf, endPosition) =>
                 {
-                    transf.localScale = BigSize;
-                }
+                    if (endPosition == positions[0])
+                    {
+                        transf.localScale = BigSize;
+                    }
 
-            }));
+
+                    if (endPosition == positions[positions.Length - 1])
+                    {
+                        circleInProgress = false;
+                    }
+                }));
         }
     }
 
@@ -63,10 +73,16 @@ public class Turnable : MonoBehaviour, ITurnable
         return (circleCenter.x > MinX && circleCenter.x < MaxX);
     }
 
-    IEnumerator MoveToPosition(Transform transform, Vector3 newPosition, float time, Action<Transform, Vector3> endPositionReachedAction = null)
+    IEnumerator MoveToPosition(Transform transform, Vector3 newPosition, float time,Action<Transform> beforeAction = null, Action<Transform, Vector3> endPositionReachedAction = null)
     {
         var elapsedTime = 0f;
         var startingPos = transform.localPosition;
+
+        if (beforeAction != null)
+        {
+            beforeAction.Invoke(transform);
+        }
+
         while (elapsedTime < time)
         {
             transform.localPosition = Vector3.Lerp(startingPos, newPosition, (elapsedTime / time));
