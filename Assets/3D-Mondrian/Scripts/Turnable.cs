@@ -17,18 +17,30 @@ public class Turnable : MonoBehaviour, ITurnable
 
     public float smoothPositionChangeFactor = 1f;
 
-    private bool circleInProgress = false;
+    private bool _circleInProgress;
 
     public void TurnCounterClockwise()
     {
-        throw new System.NotImplementedException();
+        if (_circleInProgress) return;
+        _circleInProgress = true;
 
+        var tmpArray = new GameObject[turnees.Length];
+
+        tmpArray[turnees.Length -1] = turnees[0];
+
+        for (var i = 1; i < turnees.Length; ++i)
+        {
+            tmpArray[i - 1] = turnees[i];
+        }
+        turnees = tmpArray;
+
+        RepositionGameObjects(turnees);
     }
 
     public void TurnClockwise()
     {
-        if (circleInProgress) return;
-        circleInProgress = true;
+        if (_circleInProgress) return;
+        _circleInProgress = true;
 
         var tmpArray = new GameObject[turnees.Length];
         tmpArray[0] = turnees[turnees.Length - 1];
@@ -40,18 +52,15 @@ public class Turnable : MonoBehaviour, ITurnable
 
         turnees = tmpArray;
 
-        /*foreach (var turnee in turnees)
+        RepositionGameObjects(turnees);
+    }
+    
+    private void RepositionGameObjects(IList<GameObject> gameObjects)
+    {
+        for (var i = 0; i < gameObjects.Count; ++i)
         {
-            turnee.transform.localScale = SmallSize;
-        }*/
-
-        for (var i = 0; i < turnees.Length; ++i)
-        {
-            StartCoroutine(MoveToPosition(turnees[i].transform, positions[i], smoothPositionChangeFactor,
-                (transf) =>
-                {
-                    transf.localScale = SmallSize;
-                },
+            StartCoroutine(MoveToPosition(gameObjects[i].transform, positions[i], smoothPositionChangeFactor,
+                (transf) => { transf.localScale = SmallSize; },
                 (transf, endPosition) =>
                 {
                     if (endPosition == positions[0])
@@ -62,11 +71,13 @@ public class Turnable : MonoBehaviour, ITurnable
 
                     if (endPosition == positions[positions.Length - 1])
                     {
-                        circleInProgress = false;
+                        _circleInProgress = false;
                     }
                 }));
         }
     }
+
+
 
     public bool InRange(Vector3 circleCenter)
     {
