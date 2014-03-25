@@ -7,17 +7,10 @@ public class Turnable : MonoBehaviour, ITurnable
 {
 
     public GameObject[] turnees;
-    public Vector3[] positions = new Vector3[]
-    {
-        new Vector3(0.64f, 1.5182f, -3.21f),
-        new Vector3(1f, 0.6f, -3.21f),
-        new Vector3(1, 0, -3.21f),
-        new Vector3(0.25f, 0, -3.21f),
-        new Vector3(0.25f, 0, -3.21f),  
-    };
+    public Vector3[] positions;
 
-    public Vector3 BigSize = new Vector3(0.7f, 0.7f, 0.5f);
-    public Vector3 SmallSize = new Vector3(0.5f, 0.5f, 0.5f);
+    public Vector3 BigSize;// = new Vector3(0.7f, 0.7f, 0.5f);
+    public Vector3 SmallSize;// = new Vector3(0.5f, 0.5f, 0.5f);
 
     public float MinX = -2f;
     public float MaxX = 0f;
@@ -49,12 +42,18 @@ public class Turnable : MonoBehaviour, ITurnable
 
         for (var i = 0; i < turnees.Length; ++i)
         {
-            StartCoroutine(MoveToPosition(turnees[i].transform, positions[i], smoothPositionChangeFactor, (transf) =>
+            StartCoroutine(MoveToPosition(turnees[i].transform, positions[i], smoothPositionChangeFactor, (transf, endPosition) =>
             {
-                if (transf.localPosition == positions[0])
+                /*if (endPosition == positions[0])
+                {
+                    transf.localScale = BigSize;
+                }*/
+
+                if (transf.parent.name == turnees[0].name)
                 {
                     transf.localScale = BigSize;
                 }
+
             }));
         }
     }
@@ -64,7 +63,7 @@ public class Turnable : MonoBehaviour, ITurnable
         return (circleCenter.x > MinX && circleCenter.x < MaxX);
     }
 
-    IEnumerator MoveToPosition(Transform transform, Vector3 newPosition, float time, Action<Transform> endPositionReachedAction = null)
+    IEnumerator MoveToPosition(Transform transform, Vector3 newPosition, float time, Action<Transform, Vector3> endPositionReachedAction = null)
     {
         var elapsedTime = 0f;
         var startingPos = transform.localPosition;
@@ -78,7 +77,7 @@ public class Turnable : MonoBehaviour, ITurnable
 
         if (endPositionReachedAction != null)
         {
-            endPositionReachedAction.Invoke(transform);
+            endPositionReachedAction.Invoke(transform, newPosition);
         }
     }
 }

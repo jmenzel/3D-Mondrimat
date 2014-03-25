@@ -27,7 +27,28 @@ public class WireFrameLineRenderer : MonoBehaviour
     //*****************************************************************************************
     public class Line
     {
-        public Vector3 PointA;
+        protected bool Equals(Line other)
+        {
+            return PointA.Equals(other.PointA) && PointB.Equals(other.PointB);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((Line) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (PointA.GetHashCode()*397) ^ PointB.GetHashCode();
+            }
+        }
+
+        public readonly Vector3 PointA;
         public Vector3 PointB;
 
         public Line(Vector3 a, Vector3 b)
