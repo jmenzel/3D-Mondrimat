@@ -198,7 +198,7 @@ public class LeapHandleObject : LeapGameObject
 
     void RotateBasedOnHandPosition()
     {
-        //float rotAngle = CalculateSteeringRotationAngle(handOnHandle.transform.position, unityHand.transform.position);
+        //float rotAngle = CalculateSteeringRotationAngle(handOnHandle.transform.positions, unityHand.transform.positions);
         float rotAngle = CalculateSteeringRotationAngle(handOnHandlePOS, unityHandPOS);
 
         Debug.DrawLine(Vector3.zero, unityHandPOS, Color.red);
@@ -206,7 +206,7 @@ public class LeapHandleObject : LeapGameObject
         Debug.DrawLine(Vector3.zero, handOnHandlePOS, Color.red);
         Debug.DrawLine(Vector3.zero, rotationObjectPOS, Color.red);
 
-        //if (isLeft(rotationObject.transform.position, unityHand.transform.position, handOnHandle.transform.position))
+        //if (isLeft(rotationObject.transform.positions, unityHand.transform.positions, handOnHandle.transform.positions))
         if (isLeft(rotationObjectPOS, unityHandPOS, handOnHandlePOS))
         {
             rotationObject.rotValue += rotAngle;

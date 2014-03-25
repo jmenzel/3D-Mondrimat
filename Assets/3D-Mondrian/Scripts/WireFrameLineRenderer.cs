@@ -180,7 +180,7 @@ public class WireFrameLineRenderer : MonoBehaviour
     public void DrawQuad(Vector3 p1, Vector3 p2)
     {
         var thisWidth = 1.0F/Screen.width * lineWidth * .5F;
-        var edge1 = (p2 + p1); // Camera.main.transform.position - (p2 + p1) / 2.0F;	//vector from line center to camera
+        var edge1 = (p2 + p1); // Camera.main.transform.positions - (p2 + p1) / 2.0F;	//vector from line center to camera
         var edge2 = p2-p1;	//vector from point to point
         var perpendicular = Vector3.Cross(edge1,edge2).normalized * thisWidth;
  

@@ -108,7 +108,7 @@ public class UnityHand : MonoBehaviour
     }
 
     /// <summary>
-    /// Activates and updates position of Unity Fingers if a corresponding finger is detected
+    /// Activates and updates positions of Unity Fingers if a corresponding finger is detected
     /// </summary>
     private void UpdateFingers()
     {
@@ -152,13 +152,13 @@ public class UnityHand : MonoBehaviour
 
 	public void UpdateHand()
 	{
-		// Smoothly update the orientation and position of the hand
+		// Smoothly update the orientation and positions of the hand
 		Vector3 newPosition = hand.PalmPosition.ToUnityTranslated();
 
         newPosition = new Vector3(newPosition.x * settings.leapPosMultiplier.x, newPosition.y * settings.leapPosMultiplier.y, newPosition.z * settings.leapPosMultiplier.z);
 
-		// Offset position of hands
-		// Logic works to let hands keep their localPosition (moved by camLookAt)  //TODO: is camLookAt necessary? it seems like hand position shouldn't be determined by camera -jason
+		// Offset positions of hands
+		// Logic works to let hands keep their localPosition (moved by camLookAt)  //TODO: is camLookAt necessary? it seems like hand positions shouldn't be determined by camera -jason
 		// then it offsets the hand the appropriate amount from Leap device
         transform.localPosition -= originalPos;
         transform.localPosition = transform.localPosition + newPosition;

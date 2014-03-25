@@ -24,7 +24,7 @@
  * - Converting Leap data into Unity's units and Vector3 objects. (LeapExtensions.cs)
  *  > This is accomplished via three extension methods which return Unity Vector3 objects:
  *   1. myVectorInstance.ToUnity() # For things like direciton vectors which are normalized.
- *   2. myVectorInstance.ToUnityScales() # For things like Acceleration/Velocity where units must be converted, but position is not a factor.
+ *   2. myVectorInstance.ToUnityScales() # For things like Acceleration/Velocity where units must be converted, but positions is not a factor.
  *   3. myVectorInstance.ToUnityTranslated() # For things like positions where units must be scaled AND we want to offset the coordinates into our game's coordinate space.
  * 
  * - Providing easy access to common data like pointing fingers and hand/finger locations in Unity screen or world coordinates.
@@ -100,7 +100,7 @@ public class LeapManager : MonoBehaviour {
 	}
 
 	/*
-	 * The screen position of the currently tracked (if any) pointing finger projected into world space
+	 * The screen positions of the currently tracked (if any) pointing finger projected into world space
 	 * at a distance of [screenToWorldDistance].
 	 */
 	public Vector3 pointerPositionScreenToWorld {
@@ -146,7 +146,7 @@ public class LeapManager : MonoBehaviour {
 	}
 
 	/*
-	 * Returns a list of fingers whose position is in front 
+	 * Returns a list of fingers whose positions is in front 
 	 * of the hand (relative to the hand direction). 
 	 * 
 	 * This is most useful in trying to lower the chances 

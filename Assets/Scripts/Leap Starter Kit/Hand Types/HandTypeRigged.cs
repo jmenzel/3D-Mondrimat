@@ -62,7 +62,7 @@ public class HandTypeRigged : HandTypeBase
     }
 
     /// <summary>
-    /// Update joint position based on finger position
+    /// Update joint positions based on finger positions
     /// </summary>
     void UpdateJoints()
     {

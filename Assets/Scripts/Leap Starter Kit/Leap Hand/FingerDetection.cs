@@ -61,7 +61,7 @@ public class FingerDetection
 
     /// <summary>
     /// Reassigns the fingers depending on if there are 5 fingers or less than 5 fingers.
-    /// Reassigns fingers based on fingers X position from the hands transform.
+    /// Reassigns fingers based on fingers X positions from the hands transform.
     /// </summary>
     /// <param name="hand"></param>
     private void ReAssignFingers(Hand hand)

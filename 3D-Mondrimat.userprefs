@@ -1,9 +1,8 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Standard Assets\Toon Shading\Sources\Shaders\Toony-LightedOutline.shader">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\3D-Mondrian\Scripts\FingerControl.cs">
     <Files>
-      <File FileName="Assets\3D-Mondrian\Shader\BoxOutline.shader" Line="1" Column="1" />
-      <File FileName="Assets\Standard Assets\Toon Shading\Sources\Shaders\Toony-LightedOutline.shader" Line="1" Column="1" />
+      <File FileName="Assets\3D-Mondrian\Scripts\FingerControl.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

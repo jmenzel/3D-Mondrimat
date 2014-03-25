@@ -135,12 +135,12 @@ public class LeapHandController : MonoBehaviour
 			}
 		}
 
-		//if finger analysis did not determine a hand, make an assumption based on position
+		//if finger analysis did not determine a hand, make an assumption based on positions
 		AssumeHand(h);
 	}
 	
 	/// <summary>
-	/// assume left / right hand based on absolute leap position
+	/// assume left / right hand based on absolute leap positions
 	/// </summary>
 	/// <param name="h">hand to be solved</param>
 	private void AssumeHand(Hand h)
