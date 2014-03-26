@@ -22,6 +22,8 @@ namespace Assets.Scripts
 
         private Color _savedColor;
 
+        private Finger _activeFinger = null;
+
         // Use this for initialization
         void Start () 
         {
@@ -78,10 +80,21 @@ namespace Assets.Scripts
             {
                 _pointer[0].SetActive(false);
                // _pointer[1].SetActive(false);
-            }*/
+            }
+ */
 
-            HandleFinger(frame.Fingers.Frontmost, _pointer[0]);
-            //HandleFrontFinger((frame.Fingers.Count > 0 && frame.Hands.Count < 2) ? frame.Fingers.Frontmost : null);
+            if (frame.Fingers.Count == 0)
+            {
+                _activeFinger = null;
+            }
+            else
+            {
+                _activeFinger = _activeFinger == null ? frame.Fingers.Frontmost : frame.Finger(_activeFinger.Id);
+            }
+
+
+
+            HandleFinger(_activeFinger, _pointer[0]);
             HandleGestures(frame.Gestures());
         
         }
