@@ -17,6 +17,9 @@ public class Turnable : MonoBehaviour, ITurnable
 
     public float smoothPositionChangeFactor = 1f;
 
+    public string activeTag;
+    public string defaultTag;
+
     private bool _circleInProgress;
 
     public void TurnCounterClockwise()
@@ -59,15 +62,21 @@ public class Turnable : MonoBehaviour, ITurnable
     {
         for (var i = 0; i < gameObjects.Count; ++i)
         {
-            StartCoroutine(MoveToPosition(gameObjects[i].transform, positions[i], smoothPositionChangeFactor,
+            StartCoroutine(MoveToPosition(gameObjects[i], positions[i], smoothPositionChangeFactor,
                 (transf) => { transf.localScale = SmallSize; },
-                (transf, endPosition) =>
+                (gameObj, endPosition) =>
                 {
+                    var transf = gameObj.transform;
+
                     if (endPosition == positions[0])
                     {
                         transf.localScale = BigSize;
+                        gameObj.tag = activeTag;
                     }
-
+                    else
+                    {
+                        gameObj.tag = defaultTag;
+                    }
 
                     if (endPosition == positions[positions.Length - 1])
                     {
@@ -84,27 +93,28 @@ public class Turnable : MonoBehaviour, ITurnable
         return (circleCenter.x > MinX && circleCenter.x < MaxX);
     }
 
-    IEnumerator MoveToPosition(Transform transform, Vector3 newPosition, float time,Action<Transform> beforeAction = null, Action<Transform, Vector3> endPositionReachedAction = null)
+    static IEnumerator MoveToPosition(GameObject gameObj, Vector3 newPosition, float time, Action<Transform> beforeAction = null, Action<GameObject, Vector3> endPositionReachedAction = null)
     {
+        var transf = gameObj.transform;
         var elapsedTime = 0f;
-        var startingPos = transform.localPosition;
+        var startingPos = transf.localPosition;
 
         if (beforeAction != null)
         {
-            beforeAction.Invoke(transform);
+            beforeAction.Invoke(transf);
         }
 
         while (elapsedTime < time)
         {
-            transform.localPosition = Vector3.Lerp(startingPos, newPosition, (elapsedTime / time));
+            transf.localPosition = Vector3.Lerp(startingPos, newPosition, (elapsedTime / time));
             elapsedTime += Time.deltaTime;
             yield return null;
         }
-        transform.localPosition = newPosition;
+        transf.localPosition = newPosition;
 
         if (endPositionReachedAction != null)
         {
-            endPositionReachedAction.Invoke(transform, newPosition);
+            endPositionReachedAction.Invoke(gameObj, newPosition);
         }
     }
 }

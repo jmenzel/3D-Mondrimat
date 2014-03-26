@@ -77,7 +77,7 @@ namespace Assets.Scripts
                // _pointer[1].SetActive(false);
             }*/
 
-
+            HandleFinger(frame.Fingers.Frontmost, _pointer[0]);
             //HandleFrontFinger((frame.Fingers.Count > 0 && frame.Hands.Count < 2) ? frame.Fingers.Frontmost : null);
             HandleGestures(frame.Gestures());
         
@@ -114,25 +114,31 @@ namespace Assets.Scripts
                 RaycastHit hit;
                 var directionRay = new Ray(pPointer.transform.position, Vector3.forward);
                 Debug.DrawRay(pPointer.transform.position, Vector3.forward * 10);
+                
                 if (Physics.Raycast(directionRay, out hit, 10))
                 {
                     var newHittedObject = hit.collider.gameObject;
 
                     if (newHittedObject == null) return;
-                    if (newHittedObject.tag != "Menu") return;
+                    if (newHittedObject == _lastHittedObject) return;
 
-                    if (newHittedObject != _lastHittedObject)
+                    /*
+                    if (_lastHittedObject != null)
                     {
-                        if (_lastHittedObject != null)
-                        {
+                        _lastHittedObject.GetComponent<WireFrameLineRenderer>().enabled = false;
+                    }
 
-                            _lastHittedObject.GetComponent<WireFrameLineRenderer>().enabled = false;
-                        }
+                    newHittedObject.GetComponent<WireFrameLineRenderer>().enabled = true;
+                    */
 
-                        newHittedObject.GetComponent<WireFrameLineRenderer>().enabled = true;
+                    _lastHittedObject = newHittedObject;
 
-                        _lastHittedObject = newHittedObject;
-
+                    if (newHittedObject.tag == "MondrianCube")
+                    {
+                        Debug.Log("I Hit da Cube =): " + newHittedObject + " - " + newHittedObject.tag);
+                    }
+                    else
+                    {
                         Debug.Log("I Hit something =): " + newHittedObject + " - " + newHittedObject.tag);
                     }
                 }

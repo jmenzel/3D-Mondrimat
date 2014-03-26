@@ -56,17 +56,16 @@ namespace Assets
         private void SplitVertical()
         {
             var scale = transform.localScale;
-            var position = transform.position;
 
             transform.localScale = new Vector3(scale.x / 2, scale.y, scale.z);
             var o = Instantiate(MonCube, transform.position, transform.rotation) as GameObject;
 
             transform.Translate(Vector3.left * (scale.x / 4));
-            o.transform.Translate(Vector3.right * (scale.x / 4));
+            if (o == null) return;
             
+            o.transform.Translate(Vector3.right * (scale.x / 4));
             o.transform.parent = transform.parent;
-
-            if (o != null) o.renderer.material.color = _supportedColors[0];
+            o.renderer.material.color = _supportedColors[0];
         }
 
         private void SplitHorizontal()
