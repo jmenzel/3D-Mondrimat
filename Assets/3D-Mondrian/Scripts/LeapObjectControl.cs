@@ -35,7 +35,7 @@ public class LeapObjectControl : MonoBehaviour
         var frame = _mLeapController.Frame();
 
         if (frame.Hands.Count < 2) return;
-        if (frame.Fingers.Count < 6)
+        if (frame.Fingers.Count < 7)
         {
             return;
         }

@@ -14,7 +14,7 @@ namespace Assets
         {
             _supportedColors = new[] { Color.red, Color.yellow, Color.blue, Color.black, Color.white };
             _colorPointer = 0;
-            renderer.material.color = Color.red;
+            //renderer.material.color = Color.red;
         }
 
         private void OnMouseDown()

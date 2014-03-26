@@ -57,7 +57,7 @@ namespace Assets.Scripts
 
             _leap.EnableGesture(Gesture.GestureType.TYPECIRCLE);
             _leap.EnableGesture(Gesture.GestureType.TYPEKEYTAP);
-            //_leap.EnableGesture(Gesture.GestureType.TYPESCREENTAP);
+            _leap.EnableGesture(Gesture.GestureType.TYPESCREENTAP);
             //_leap.EnableGesture(Gesture.GestureType.TYPESWIPE);
             //_leap.EnableGesture(Gesture.GestureType.TYPEINVALID);
 
@@ -218,7 +218,7 @@ namespace Assets.Scripts
                         if(ActionEnabled()) HandleKeyTapGesture(gesture);
                         break;
                     case Gesture.GestureType.TYPESCREENTAP:
-                        Debug.Log("ScreenTap");
+                        if (ActionEnabled()) HandleScreenTapGesture(gesture);
                         break;
                     case Gesture.GestureType.TYPESWIPE:
                         //HandleSwipeGesture(gesture);
@@ -235,12 +235,53 @@ namespace Assets.Scripts
 
         private void HandleKeyTapGesture(Gesture gesture)
         {
-            if (gesture.Frame.Fingers.Count != 2) return;
+            if (gesture.Frame.Fingers.Count < 2) return;
 
             //Reset Timer
             resetTimer.ResetCounter();
 
             var keytap = new KeyTapGesture(gesture);
+            Debug.Log("KeyTap " + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x);
+
+            var right = keytap.Position.x > 0;
+
+            if (_activeFingerA != null && _lastHittedObject != null)
+            {
+                var mondrian = _lastHittedObject.GetComponent<MondrianBehaviour>();
+                if (right)
+                {
+                    var actionObject = GameObject.FindGameObjectWithTag("ActiveAction");
+
+                    if (actionObject.name.ToLower().Contains("vertical"))
+                    {
+                        mondrian.SplitVertical();
+                    }
+                    else if (actionObject.name.ToLower().Contains("horizontal"))
+                    {
+                        mondrian.SplitHorizontal();
+                    }
+                }
+                else
+                {
+                    var colorObject = GameObject.FindGameObjectWithTag("ActiveColor");
+
+                    var color = colorObject.renderer.material.color;
+
+                    mondrian.ChangeColour(color);
+                    _savedColor = color;
+                }
+            }
+
+        }
+
+        private void HandleScreenTapGesture(Gesture gesture)
+        {
+            if (gesture.Frame.Fingers.Count < 2) return;
+
+            //Reset Timer
+            resetTimer.ResetCounter();
+
+            var keytap = new ScreenTapGesture(gesture);
             Debug.Log("KeyTap " + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x);
 
             var right = keytap.Position.x > 0;
@@ -341,7 +382,7 @@ namespace Assets.Scripts
                 Debug.Log("Expected Hand 1 - actual: " + circle.Frame.Hands.Count);
                 return;
             }
-
+            if (circle.Radius < circleRadiusChangeViewLimit) return;
 //            if (circle.Radius <= circleRadiusChangeViewLimit)
 //            {
 //                Debug.Log("Expected Radius: " + circleRadiusChangeViewLimit + " <= - actual: " + circle.Radius);
