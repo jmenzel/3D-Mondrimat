@@ -5,25 +5,19 @@ namespace Assets
 {
     public class MondrianBehaviour : MonoBehaviour
     {
-        public float ObjectDistance = 0.01f;
         public GameObject MonCube;
-        public float SplitLerpFactor = 0.5f;
 
         private Color[] _supportedColors;
         private uint _colorPointer;
-        
-        public void Start ()
+
+        private void Start ()
         {
             _supportedColors = new[] { Color.red, Color.yellow, Color.blue, Color.black, Color.white };
             _colorPointer = 0;
             renderer.material.color = Color.red;
         }
 
-        public void Update()
-        {
-        }
-
-        public void OnMouseDown()
+        private void OnMouseDown()
         {
             //Split Horizontal
             if (Input.GetKey(KeyCode.Y))
@@ -49,7 +43,7 @@ namespace Assets
             renderer.material.color = color;
         }
 
-        public void ChangeColour()
+        private void ChangeColour()
         {
             if (_colorPointer >= _supportedColors.Length)
             {
@@ -77,7 +71,6 @@ namespace Assets
         public void SplitHorizontal()
         {
             var scale = transform.localScale;
-            var position = transform.position;
 
             transform.localScale = new Vector3(scale.x, (scale.y / 2), scale.z);
 

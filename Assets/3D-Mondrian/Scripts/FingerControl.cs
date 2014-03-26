@@ -34,18 +34,24 @@ namespace Assets.Scripts
                 Debug.LogError("Must have a parent object to control");
             }
 
+//            var config = _leap.Config;
+//            config.SetFloat("Gesture.KeyTap.MinDistance", 2f);
+//            config.SetFloat("Gesture.KeyTap.MinDownVelocity", 20f);
+//            var success = config.Save();
+//            Debug.Log("Save Leap config: " + success);
+
             _leap.EnableGesture(Gesture.GestureType.TYPECIRCLE);
             _leap.EnableGesture(Gesture.GestureType.TYPEKEYTAP);
             //_leap.EnableGesture(Gesture.GestureType.TYPESCREENTAP);
-            _leap.EnableGesture(Gesture.GestureType.TYPESWIPE);
-            _leap.EnableGesture(Gesture.GestureType.TYPEINVALID);
+            //_leap.EnableGesture(Gesture.GestureType.TYPESWIPE);
+            //_leap.EnableGesture(Gesture.GestureType.TYPEINVALID);
 
             _pointerZOffset = pointer.transform.position.z;
 
             _pointer = new[]
             {
                 Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject,
-                //Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject
+                Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject
             };
         }
 	
@@ -56,18 +62,28 @@ namespace Assets.Scripts
 
             var frame = _leap.Frame();
 
-            if (frame.Fingers.Count == 0)
-            {
-                _activeFingerA = null;
-            }
-            else
-            {
-                _activeFingerA = _activeFingerA == null ? frame.Fingers.Frontmost : frame.Finger(_activeFingerA.Id);
-            }
+            Debug.Log("I Found " + frame.Fingers.Count + " fingers...");
 
+            switch (frame.Fingers.Count)
+            {
+                case 0:
+                    _activeFingerA = null;
+                    //_activeFingerB = null;
+                    break;
+                case 1:
+                    _activeFingerA = _activeFingerA != null ? frame.Finger(_activeFingerA.Id) : frame.Fingers.Frontmost;
+                    _activeFingerB = null;
+                    break;
+                default:
+                    _activeFingerA = _activeFingerA != null ? frame.Finger(_activeFingerA.Id) : frame.Fingers.Frontmost;
+                    //_activeFingerA = _activeFingerA != null ? frame.Finger(_activeFingerA.Id) : frame.Fingers.Rightmost;
+                    //_activeFingerB = _activeFingerB != null ? frame.Finger(_activeFingerB.Id) : frame.Fingers.Leftmost;
+                    break;
+            }
 
 
             HandleFinger(_activeFingerA, _pointer[0]);
+            //HandleFinger(_activeFingerB, _pointer[1]);
             HandleGestures(frame.Gestures());
         
         }
@@ -150,14 +166,9 @@ namespace Assets.Scripts
 
         private void ResetGameObjectColor()
         {
-            if (_lastHittedObject != null)
-            {
-                if (_lastHittedObject.renderer.material.color == Color.cyan)
-                {
-                    _lastHittedObject.renderer.material.color = _savedColor;
-                }
-                _lastHittedObject = null;
-            }
+            if (_lastHittedObject == null) return;
+            _lastHittedObject.renderer.material.color = _savedColor;
+            _lastHittedObject = null;
         }
 
         private void HandleGestures(IEnumerable<Gesture> gestures)
@@ -218,6 +229,7 @@ namespace Assets.Scripts
                     var color = colorObject.renderer.material.color;
 
                     mondrian.ChangeColour(color);
+                    _savedColor = color;
                 }
             }
 
