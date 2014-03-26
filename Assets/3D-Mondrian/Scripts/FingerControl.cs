@@ -33,6 +33,8 @@ namespace Assets.Scripts
 
         private Vector3 _originCamPosition;
 
+        private bool runCamChange;
+
         // Use this for initialization
         private void Start()
         {
@@ -316,10 +318,13 @@ namespace Assets.Scripts
             if (gesture.State != Gesture.GestureState.STATESTOP) return;
 
             var mondrianContainer = GameObject.Find("MondrianContainer");
-            //TODO Change View
+
 
             var camComponent = Camera.main.GetComponent<LeapCamControl>();
             var mondrianComponent = mondrianContainer.GetComponent<LeapObjectControl>();
+
+            //Run only once at time
+            if (runCamChange) return;
 
             if (!ActionEnabled())
             {
@@ -337,8 +342,9 @@ namespace Assets.Scripts
             }
         }
 
-        static IEnumerator MoveCamToOriginPosition(Vector3 origin, Vector3 directedTo, float time)
+        IEnumerator MoveCamToOriginPosition(Vector3 origin, Vector3 directedTo, float time)
         {
+            runCamChange = true;
             var transf = Camera.main.transform;
             var elapsedTime = 0f;
             var startingPos = transf.localPosition;
@@ -352,6 +358,7 @@ namespace Assets.Scripts
             }
             transf.localPosition = origin;
             transf.LookAt(directedTo);
+            runCamChange = false;
         }
     }
 }
