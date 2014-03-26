@@ -35,6 +35,8 @@ namespace Assets.Scripts
 
         private bool runCamChange;
 
+        private RestartSceneAfterTimeout resetTimer;
+
         // Use this for initialization
         private void Start()
         {
@@ -45,7 +47,7 @@ namespace Assets.Scripts
             }
 
             _originCamPosition = Camera.main.transform.position;
-
+            resetTimer = Camera.main.GetComponent<RestartSceneAfterTimeout>();
 
 //            var config = _leap.Config;
 //            config.SetFloat("Gesture.KeyTap.MinDistance", 2f);
@@ -130,6 +132,9 @@ namespace Assets.Scripts
                 {
                     pPointer.SetActive(true);
                 }
+
+                //Reset Timer
+                resetTimer.ResetCounter();
 
                 //Perform action
                 var calcedPos = finger.TipPosition.ToUnityScaled();
@@ -232,6 +237,9 @@ namespace Assets.Scripts
         {
             if (gesture.Frame.Fingers.Count != 2) return;
 
+            //Reset Timer
+            resetTimer.ResetCounter();
+
             var keytap = new KeyTapGesture(gesture);
             Debug.Log("KeyTap " + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x);
 
@@ -283,9 +291,14 @@ namespace Assets.Scripts
         private void HandleCircleGestureForTurnables(Gesture gesture)
         {
             if (!ActionEnabled()) return;
+            
+            //Reset Timer
+            resetTimer.ResetCounter();
+
             var circle = new CircleGesture(gesture);
 
-            if (circle.Radius > circleRadiusChangeViewLimit) return;
+            //if (circle.Radius > circleRadiusChangeViewLimit) return;
+            if (gesture.Frame.Hands.Count < 2) return;
 
             if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID)
                 return;
@@ -313,9 +326,32 @@ namespace Assets.Scripts
 
         private void HandleCircleGestureForViewChange(Gesture gesture)
         {
+            //Reset Timer
+            resetTimer.ResetCounter();
+
             var circle = new CircleGesture(gesture);
-            if (circle.Radius <= circleRadiusChangeViewLimit) return;
+
+//            if (circle.Frame.Fingers.Count < 3)
+//            {
+//                Debug.Log("Expected Fingers < 3 - actual: " + circle.Frame.Fingers.Count);
+//                return;
+//            }
+            if (circle.Frame.Hands.Count > 1)
+            {
+                Debug.Log("Expected Hand 1 - actual: " + circle.Frame.Hands.Count);
+                return;
+            }
+
+//            if (circle.Radius <= circleRadiusChangeViewLimit)
+//            {
+//                Debug.Log("Expected Radius: " + circleRadiusChangeViewLimit + " <= - actual: " + circle.Radius);
+//                return;
+//            }
+
             if (gesture.State != Gesture.GestureState.STATESTOP) return;
+
+            Debug.Log("Accepted: Fingers: " + circle.Frame.Fingers.Count + " Hands: " + circle.Frame.Hands.Count + " Radius: " + circle.Radius);
+
 
             var mondrianContainer = GameObject.Find("MondrianContainer");
 

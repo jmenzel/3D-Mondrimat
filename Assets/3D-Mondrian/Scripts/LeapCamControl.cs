@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using UnityEngine;
-using System.Collections;
 using Leap;
 
 public class LeapCamControl : MonoBehaviour {
@@ -14,6 +13,8 @@ public class LeapCamControl : MonoBehaviour {
     public float SmoothLerpFactor = 0.2f;
     public float CamZoomOffset = 2;
 
+    private RestartSceneAfterTimeout resetTimer;
+
 	// Use this for initialization
 	void Start () 
     {
@@ -22,6 +23,8 @@ public class LeapCamControl : MonoBehaviour {
         {
             Debug.LogError("LeapFly must have a parent object to control");
         }
+
+        resetTimer = Camera.main.GetComponent<RestartSceneAfterTimeout>();
 	}
 	
 
@@ -36,6 +39,9 @@ public class LeapCamControl : MonoBehaviour {
             {
                 return;
             }
+
+            //Reset Timer
+            resetTimer.ResetCounter();
 
             Hand leftHand = GetLeftMostHand(frame);
             Hand rightHand = GetRightMostHand(frame);
