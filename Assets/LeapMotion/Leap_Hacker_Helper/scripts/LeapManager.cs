@@ -188,7 +188,7 @@ public class LeapManager : MonoBehaviour {
 		{
 			_mainCam = (GameObject.FindGameObjectWithTag("MainCamera") as GameObject).GetComponent(typeof(Camera)) as Camera;
 		}
-		Debug.Log(_mainCam);
+		//Debug.Log(_mainCam);
 	}
 	
 	/*

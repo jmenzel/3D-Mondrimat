@@ -22,7 +22,8 @@ namespace Assets.Scripts
 
         private Color _savedColor;
 
-        private Finger _activeFinger = null;
+        private Finger _activeFingerA = null;
+        private Finger _activeFingerB = null;
 
         // Use this for initialization
         void Start () 
@@ -30,12 +31,12 @@ namespace Assets.Scripts
             _leap = new Controller();
             if (transform == null)
             {
-                Debug.LogError("LeapFly must have a parent object to control");
+                Debug.LogError("Must have a parent object to control");
             }
 
             _leap.EnableGesture(Gesture.GestureType.TYPECIRCLE);
-            //_leap.EnableGesture(Gesture.GestureType.TYPEKEYTAP);
-            _leap.EnableGesture(Gesture.GestureType.TYPESCREENTAP);
+            _leap.EnableGesture(Gesture.GestureType.TYPEKEYTAP);
+            //_leap.EnableGesture(Gesture.GestureType.TYPESCREENTAP);
             _leap.EnableGesture(Gesture.GestureType.TYPESWIPE);
             _leap.EnableGesture(Gesture.GestureType.TYPEINVALID);
 
@@ -54,47 +55,19 @@ namespace Assets.Scripts
             if (_leap == null) return;
 
             var frame = _leap.Frame();
-/*
-            if(frame.Fingers.Count > 0 && frame.Fingers.Count < 2 && frame.Hands.Count == 1)
-            {
-                var finger = frame.Fingers.Frontmost;
-                if (finger != null)
-                {
-                    HandleFinger(finger, _pointer[0]);
-                }
-                else
-                {
-                    _pointer[0].SetActive(false);
-                }
-                //_pointer[1].SetActive(false);
-            }
-            else if (frame.Fingers.Count > 0 && frame.Fingers.Count < 3 && frame.Hands.Count == 2)
-            {
-                var fingerLeft = frame.Fingers.Leftmost;
-                //var fingerRight = frame.Fingers.Rightmost;
-
-                if (fingerLeft != null) HandleFinger(fingerLeft, _pointer[0]);
-                //if (fingerRight != null) HandleFinger(fingerRight, _pointer[1]);
-            }
-            else
-            {
-                _pointer[0].SetActive(false);
-               // _pointer[1].SetActive(false);
-            }
- */
 
             if (frame.Fingers.Count == 0)
             {
-                _activeFinger = null;
+                _activeFingerA = null;
             }
             else
             {
-                _activeFinger = _activeFinger == null ? frame.Fingers.Frontmost : frame.Finger(_activeFinger.Id);
+                _activeFingerA = _activeFingerA == null ? frame.Fingers.Frontmost : frame.Finger(_activeFingerA.Id);
             }
 
 
 
-            HandleFinger(_activeFinger, _pointer[0]);
+            HandleFinger(_activeFingerA, _pointer[0]);
             HandleGestures(frame.Gestures());
         
         }
@@ -129,7 +102,7 @@ namespace Assets.Scripts
             
                 RaycastHit hit;
                 var directionRay = new Ray(pPointer.transform.position, Vector3.forward);
-                Debug.DrawRay(pPointer.transform.position, Vector3.forward * 10);
+                //Debug.DrawRay(pPointer.transform.position, Vector3.forward * 10);
                 
                 if (Physics.Raycast(directionRay, out hit, 10))
                 {
@@ -165,7 +138,7 @@ namespace Assets.Scripts
 
                 _savedColor = newHittedObject.renderer.material.color;
                 _lastHittedObject = newHittedObject;
-                Debug.Log("I Hit da Cube " + newHittedObject.name + " =): " + newHittedObject + " - " + newHittedObject.tag);
+                //Debug.Log("I Hit da Cube " + newHittedObject.name + " =): " + newHittedObject + " - " + newHittedObject.tag);
 
                 newHittedObject.renderer.material.color = Color.cyan;
             }
@@ -179,7 +152,10 @@ namespace Assets.Scripts
         {
             if (_lastHittedObject != null)
             {
-                _lastHittedObject.renderer.material.color = _savedColor;
+                if (_lastHittedObject.renderer.material.color == Color.cyan)
+                {
+                    _lastHittedObject.renderer.material.color = _savedColor;
+                }
                 _lastHittedObject = null;
             }
         }
@@ -194,13 +170,13 @@ namespace Assets.Scripts
                         HandleCircleGesture(gesture);
                         break;
                     case Gesture.GestureType.TYPEKEYTAP:
-                        Debug.Log("KeyTap - ");
+                        HandleKeyTapGesture(gesture);
                         break;
                     case Gesture.GestureType.TYPESCREENTAP:
                         Debug.Log("ScreenTap");
                         break;
                     case Gesture.GestureType.TYPESWIPE:
-                        HandleSwipeGesture(gesture);
+                        //HandleSwipeGesture(gesture);
                         break;
                     case Gesture.GestureType.TYPEINVALID:
                         Debug.Log("Invalid");
@@ -212,14 +188,51 @@ namespace Assets.Scripts
             }
         }
 
+        private void HandleKeyTapGesture(Gesture gesture)
+        {
+            var keytap = new KeyTapGesture(gesture);
+            Debug.Log("KeyTap " + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x);
+
+            var right = keytap.Position.x > 0;
+
+            if (_activeFingerA != null && _lastHittedObject != null)
+            {
+                var mondrian = _lastHittedObject.GetComponent<MondrianBehaviour>();
+                if (right)
+                {
+                    var actionObject = GameObject.FindGameObjectWithTag("ActiveAction");
+
+                    if (actionObject.name.ToLower().Contains("vertical"))
+                    {
+                        mondrian.SplitVertical();
+                    }
+                    else if (actionObject.name.ToLower().Contains("horizontal"))
+                    {
+                        mondrian.SplitHorizontal();
+                    }
+                }
+                else
+                {
+                    var colorObject = GameObject.FindGameObjectWithTag("ActiveColor");
+
+                    var color = colorObject.renderer.material.color;
+
+                    mondrian.ChangeColour(color);
+                }
+            }
+
+        }
+
         private static void HandleSwipeGesture(Gesture gesture)
         {
-            if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID ||
-                gesture.State == Gesture.GestureState.STATEUPDATE) return;
-            if (gesture.DurationSeconds < 0.10) return;
+            //if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID ||
+            //    gesture.State == Gesture.GestureState.STATEUPDATE) return;
+            //if (gesture.DurationSeconds < 0.10) return;
+
+            if(gesture.State != Gesture.GestureState.STATESTOP) return;
 
             var swipe = new SwipeGesture(gesture);
-            Debug.Log("Swipe : " + swipe.StartPosition.x + " -> " + swipe.Position.x);
+            Debug.Log("Swipe "+ swipe.Id +", " + swipe.State.ToString() + " : " + ((swipe.StartPosition.x > swipe.Position.x) ? "<<<<<<<<<<" : ">>>>>>>>>>")); //) + swipe.StartPosition.x + " -> " + swipe.Position.x);
         }
 
         private void HandleCircleGesture(Gesture gesture)
@@ -227,6 +240,8 @@ namespace Assets.Scripts
             if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID) return;
 
             var circle = new CircleGesture(gesture);
+
+            if (circle.Radius < 40) return;
 
             var circleCenter = circle.Center.ToUnityScaled();
             var clockwise = (circle.Pointable.Direction.AngleTo(circle.Normal) <= Math.PI/2);

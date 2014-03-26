@@ -16,6 +16,7 @@ namespace Assets
         {
             _supportedColors = new[] { Color.red, Color.yellow, Color.blue, Color.black, Color.white };
             _colorPointer = 0;
+            renderer.material.color = Color.red;
         }
 
         public void Update()
@@ -43,9 +44,14 @@ namespace Assets
             }
         }
 
-        private void ChangeColour()
+        public void ChangeColour(Color color)
         {
-            if(_colorPointer >= _supportedColors.Length)
+            renderer.material.color = color;
+        }
+
+        public void ChangeColour()
+        {
+            if (_colorPointer >= _supportedColors.Length)
             {
                 _colorPointer = 0;
             }
@@ -53,7 +59,7 @@ namespace Assets
             renderer.material.color = _supportedColors[_colorPointer++];
         }
 
-        private void SplitVertical()
+        public void SplitVertical()
         {
             var scale = transform.localScale;
 
@@ -68,7 +74,7 @@ namespace Assets
             o.renderer.material.color = _supportedColors[0];
         }
 
-        private void SplitHorizontal()
+        public void SplitHorizontal()
         {
             var scale = transform.localScale;
             var position = transform.position;
