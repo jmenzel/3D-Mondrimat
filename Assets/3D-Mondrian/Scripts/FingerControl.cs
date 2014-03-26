@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Leap;
 using UnityEngine;
@@ -19,6 +20,8 @@ namespace Assets.Scripts
         private GameObject _lastHittedObject;
         private GameObject[] _pointer;
 
+        private Color _savedColor;
+
         // Use this for initialization
         void Start () 
         {
@@ -31,7 +34,7 @@ namespace Assets.Scripts
             _leap.EnableGesture(Gesture.GestureType.TYPECIRCLE);
             //_leap.EnableGesture(Gesture.GestureType.TYPEKEYTAP);
             _leap.EnableGesture(Gesture.GestureType.TYPESCREENTAP);
-            //_leap.EnableGesture(Gesture.GestureType.TYPESWIPE);
+            _leap.EnableGesture(Gesture.GestureType.TYPESWIPE);
             _leap.EnableGesture(Gesture.GestureType.TYPEINVALID);
 
             _pointerZOffset = pointer.transform.position.z;
@@ -117,30 +120,11 @@ namespace Assets.Scripts
                 
                 if (Physics.Raycast(directionRay, out hit, 10))
                 {
-                    var newHittedObject = hit.collider.gameObject;
-
-                    if (newHittedObject == null) return;
-                    if (newHittedObject == _lastHittedObject) return;
-
-                    /*
-                    if (_lastHittedObject != null)
-                    {
-                        _lastHittedObject.GetComponent<WireFrameLineRenderer>().enabled = false;
-                    }
-
-                    newHittedObject.GetComponent<WireFrameLineRenderer>().enabled = true;
-                    */
-
-                    _lastHittedObject = newHittedObject;
-
-                    if (newHittedObject.tag == "MondrianCube")
-                    {
-                        Debug.Log("I Hit da Cube =): " + newHittedObject + " - " + newHittedObject.tag);
-                    }
-                    else
-                    {
-                        Debug.Log("I Hit something =): " + newHittedObject + " - " + newHittedObject.tag);
-                    }
+                    HandleRaycastHit(hit);
+                }
+                else
+                {
+                    ResetGameObjectColor();
                 }
 
        
@@ -148,28 +132,53 @@ namespace Assets.Scripts
             }
         }
 
-        private void HandleGestures(GestureList gestures)
+        private void HandleRaycastHit(RaycastHit hit)
+        {
+            var newHittedObject = hit.collider.gameObject;
+
+            if (newHittedObject == null)
+            {
+                ResetGameObjectColor();
+                return;
+            }
+            if (newHittedObject == _lastHittedObject) return;
+
+            if (newHittedObject.tag == "MondrianCube")
+            {
+                if (_lastHittedObject != null)
+                {
+                    _lastHittedObject.renderer.material.color = _savedColor;
+                }
+
+                _savedColor = newHittedObject.renderer.material.color;
+                _lastHittedObject = newHittedObject;
+                Debug.Log("I Hit da Cube " + newHittedObject.name + " =): " + newHittedObject + " - " + newHittedObject.tag);
+
+                newHittedObject.renderer.material.color = Color.cyan;
+            }
+            else
+            {
+                ResetGameObjectColor();
+            }
+        }
+
+        private void ResetGameObjectColor()
+        {
+            if (_lastHittedObject != null)
+            {
+                _lastHittedObject.renderer.material.color = _savedColor;
+                _lastHittedObject = null;
+            }
+        }
+
+        private void HandleGestures(IEnumerable<Gesture> gestures)
         {
             foreach (var gesture in gestures)
             {
                 switch (gesture.Type)
                 {
                     case Gesture.GestureType.TYPECIRCLE:
-                        if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID) continue;
-                        
-                        var circle = new CircleGesture(gesture);
-
-                        var circleCenter = circle.Center.ToUnityScaled();
-                        var clockwise = (circle.Pointable.Direction.AngleTo(circle.Normal) <= Math.PI/2);
-                
-                        Debug.Log("Circle "+ ((clockwise) ? "Clockwise" : "Counter Clockwise") +" x:" + circleCenter.x);
-
-                        foreach (var turnable in turnables.Select(x => x.GetComponent(typeof(ITurnable))).Where(x => x != null).Cast<ITurnable>().Where(turnable => turnable.InRange(circleCenter)))
-                        {
-                            if (clockwise) turnable.TurnClockwise();
-                            else turnable.TurnCounterClockwise();
-                        }
-
+                        HandleCircleGesture(gesture);
                         break;
                     case Gesture.GestureType.TYPEKEYTAP:
                         Debug.Log("KeyTap - ");
@@ -178,8 +187,7 @@ namespace Assets.Scripts
                         Debug.Log("ScreenTap");
                         break;
                     case Gesture.GestureType.TYPESWIPE:
-                        if (gesture.DurationSeconds < 0.10) continue;
-                        Debug.Log("Swipe");
+                        HandleSwipeGesture(gesture);
                         break;
                     case Gesture.GestureType.TYPEINVALID:
                         Debug.Log("Invalid");
@@ -188,6 +196,39 @@ namespace Assets.Scripts
                         Debug.Log("Bad gesture type");
                         break;
                 }
+            }
+        }
+
+        private static void HandleSwipeGesture(Gesture gesture)
+        {
+            if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID ||
+                gesture.State == Gesture.GestureState.STATEUPDATE) return;
+            if (gesture.DurationSeconds < 0.10) return;
+
+            var swipe = new SwipeGesture(gesture);
+            Debug.Log("Swipe : " + swipe.StartPosition.x + " -> " + swipe.Position.x);
+        }
+
+        private void HandleCircleGesture(Gesture gesture)
+        {
+            if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID) return;
+
+            var circle = new CircleGesture(gesture);
+
+            var circleCenter = circle.Center.ToUnityScaled();
+            var clockwise = (circle.Pointable.Direction.AngleTo(circle.Normal) <= Math.PI/2);
+
+            //Debug.Log("Circle "+ ((clockwise) ? "Clockwise" : "Counter Clockwise") +" x:" + circleCenter.x);
+
+            foreach (
+                var turnable in
+                    turnables.Select(x => x.GetComponent(typeof (ITurnable)))
+                        .Where(x => x != null)
+                        .Cast<ITurnable>()
+                        .Where(turnable => turnable.InRange(circleCenter)))
+            {
+                if (clockwise) turnable.TurnClockwise();
+                else turnable.TurnCounterClockwise();
             }
         }
     }

@@ -30,6 +30,8 @@ public class LeapObjectControl : MonoBehaviour
     void FixedUpdate()
     {
 
+        if (_mLeapController == null) return;
+
         var frame = _mLeapController.Frame();
 
         if (frame.Hands.Count < 2) return;
