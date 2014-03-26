@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public class Turnable : MonoBehaviour, ITurnable
 {
 
     public GameObject[] turnees;
     public Vector3[] positions;
+    public GameObject[] notificationSubscriber;
 
     public Vector3 BigSize;// = new Vector3(0.7f, 0.7f, 0.5f);
     public Vector3 SmallSize;// = new Vector3(0.5f, 0.5f, 0.5f);
@@ -21,6 +24,7 @@ public class Turnable : MonoBehaviour, ITurnable
     public string defaultTag;
 
     private bool _circleInProgress;
+
 
     public void TurnCounterClockwise()
     {
@@ -72,6 +76,11 @@ public class Turnable : MonoBehaviour, ITurnable
                     {
                         transf.localScale = BigSize;
                         gameObj.tag = activeTag;
+
+                        foreach (var turnNotification in notificationSubscriber.Select(x => (ITurnNotification)x.GetComponent(typeof(ITurnNotification))))
+                        {
+                            turnNotification.Notify(gameObj);
+                        }
                     }
                     else
                     {

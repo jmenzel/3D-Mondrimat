@@ -65,7 +65,8 @@ namespace Assets
             
             o.transform.Translate(Vector3.right * (scale.x / 4));
             o.transform.parent = transform.parent;
-            o.renderer.material.color = _supportedColors[0];
+            //o.renderer.material.color = _supportedColors[0];
+            o.renderer.material.color = renderer.material.color;
         }
 
         public void SplitHorizontal()
@@ -73,15 +74,15 @@ namespace Assets
             var scale = transform.localScale;
 
             transform.localScale = new Vector3(scale.x, (scale.y / 2), scale.z);
-
             var o = Instantiate(MonCube, transform.position, transform.rotation) as GameObject;
 
             transform.Translate(Vector3.up * (scale.y / 4));
+            if (o == null) return;
+            
             o.transform.Translate(Vector3.down * (scale.y / 4));
-
             o.transform.parent = transform.parent;
-
-            if (o != null) o.renderer.material.color = _supportedColors[0];
+            //o.renderer.material.color = _supportedColors[0];
+            o.renderer.material.color = renderer.material.color;
         }
     }
 }

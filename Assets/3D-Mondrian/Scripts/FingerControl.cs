@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Leap;
@@ -6,33 +7,43 @@ using UnityEngine;
 
 namespace Assets.Scripts
 {
-    public class FingerControl : MonoBehaviour 
+    public class FingerControl : MonoBehaviour
     {
 
-        Controller _leap;
+        private Controller _leap;
         public GameObject pointer;
         public GameObject[] turnables;
 
         public float PointerMaxZ = -10;
         public float PointerMinZ = -6;
         public float PointerYOffset = -9;
-        float _pointerZOffset;
+        private float _pointerZOffset;
         private GameObject _lastHittedObject;
         private GameObject[] _pointer;
+
+        public float circleRadiusChangeViewLimit = 90f;
+        public float circleRadiusIgnoreLimit = 40f;
 
         private Color _savedColor;
 
         private Finger _activeFingerA = null;
         private Finger _activeFingerB = null;
 
+        private List<Action<Gesture>> _registerdCircleHandler;
+
+        private Vector3 _originCamPosition;
+
         // Use this for initialization
-        void Start () 
+        private void Start()
         {
             _leap = new Controller();
             if (transform == null)
             {
                 Debug.LogError("Must have a parent object to control");
             }
+
+            _originCamPosition = Camera.main.transform.position;
+
 
 //            var config = _leap.Config;
 //            config.SetFloat("Gesture.KeyTap.MinDistance", 2f);
@@ -53,16 +64,23 @@ namespace Assets.Scripts
                 Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject,
                 Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject
             };
+
+            _registerdCircleHandler = new List<Action<Gesture>>
+            {
+                HandleCircleGestureForTurnables,
+                HandleCircleGestureForViewChange
+            };
         }
-	
+
+
         // Update is called once per frame
-        void FixedUpdate()
+        private void FixedUpdate()
         {
             if (_leap == null) return;
 
             var frame = _leap.Frame();
 
-            Debug.Log("I Found " + frame.Fingers.Count + " fingers...");
+            //Debug.Log("I Found " + frame.Fingers.Count + " fingers...");
 
             switch (frame.Fingers.Count)
             {
@@ -81,11 +99,18 @@ namespace Assets.Scripts
                     break;
             }
 
+            //Force quit fingers if action disabled
+            if (!ActionEnabled())
+            {
+                _activeFingerA = null;
+            }
+
 
             HandleFinger(_activeFingerA, _pointer[0]);
+
             //HandleFinger(_activeFingerB, _pointer[1]);
             HandleGestures(frame.Gestures());
-        
+
         }
 
         private void HandleFinger(Finger finger, GameObject pPointer)
@@ -109,17 +134,19 @@ namespace Assets.Scripts
 
                 calcedPos.z = calcedPos.z + _pointerZOffset;
 
-                var avgZ = (calcedPos.z < PointerMaxZ) ? PointerMaxZ : (calcedPos.z > PointerMinZ) ? PointerMinZ : calcedPos.z;
+                var avgZ = (calcedPos.z < PointerMaxZ)
+                    ? PointerMaxZ
+                    : (calcedPos.z > PointerMinZ) ? PointerMinZ : calcedPos.z;
 
                 var newPos = new Vector3(calcedPos.x, calcedPos.y + PointerYOffset, avgZ);
 
                 pPointer.transform.position = Vector3.Lerp(pPointer.transform.position, newPos, 0.5F);
 
-            
+
                 RaycastHit hit;
                 var directionRay = new Ray(pPointer.transform.position, Vector3.forward);
                 //Debug.DrawRay(pPointer.transform.position, Vector3.forward * 10);
-                
+
                 if (Physics.Raycast(directionRay, out hit, 10))
                 {
                     HandleRaycastHit(hit);
@@ -129,8 +156,8 @@ namespace Assets.Scripts
                     ResetGameObjectColor();
                 }
 
-       
-        
+
+
             }
         }
 
@@ -178,10 +205,10 @@ namespace Assets.Scripts
                 switch (gesture.Type)
                 {
                     case Gesture.GestureType.TYPECIRCLE:
-                        HandleCircleGesture(gesture);
+                        _registerdCircleHandler.ForEach(x => x.Invoke(gesture));
                         break;
                     case Gesture.GestureType.TYPEKEYTAP:
-                        HandleKeyTapGesture(gesture);
+                        if(ActionEnabled()) HandleKeyTapGesture(gesture);
                         break;
                     case Gesture.GestureType.TYPESCREENTAP:
                         Debug.Log("ScreenTap");
@@ -201,6 +228,8 @@ namespace Assets.Scripts
 
         private void HandleKeyTapGesture(Gesture gesture)
         {
+            if (gesture.Frame.Fingers.Count != 2) return;
+
             var keytap = new KeyTapGesture(gesture);
             Debug.Log("KeyTap " + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x);
 
@@ -241,24 +270,27 @@ namespace Assets.Scripts
             //    gesture.State == Gesture.GestureState.STATEUPDATE) return;
             //if (gesture.DurationSeconds < 0.10) return;
 
-            if(gesture.State != Gesture.GestureState.STATESTOP) return;
+            if (gesture.State != Gesture.GestureState.STATESTOP) return;
 
             var swipe = new SwipeGesture(gesture);
-            Debug.Log("Swipe "+ swipe.Id +", " + swipe.State.ToString() + " : " + ((swipe.StartPosition.x > swipe.Position.x) ? "<<<<<<<<<<" : ">>>>>>>>>>")); //) + swipe.StartPosition.x + " -> " + swipe.Position.x);
+            Debug.Log("Swipe " + swipe.Id + ", " + swipe.State.ToString() + " : " +
+                      ((swipe.StartPosition.x > swipe.Position.x) ? "<<<<<<<<<<" : ">>>>>>>>>>"));
+                //) + swipe.StartPosition.x + " -> " + swipe.Position.x);
         }
 
-        private void HandleCircleGesture(Gesture gesture)
+        private void HandleCircleGestureForTurnables(Gesture gesture)
         {
-            if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID) return;
-
+            if (!ActionEnabled()) return;
             var circle = new CircleGesture(gesture);
 
-            if (circle.Radius < 40) return;
+            if (circle.Radius > circleRadiusChangeViewLimit) return;
+
+            if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID)
+                return;
+            if (circle.Radius < circleRadiusIgnoreLimit) return;
 
             var circleCenter = circle.Center.ToUnityScaled();
             var clockwise = (circle.Pointable.Direction.AngleTo(circle.Normal) <= Math.PI/2);
-
-            //Debug.Log("Circle "+ ((clockwise) ? "Clockwise" : "Counter Clockwise") +" x:" + circleCenter.x);
 
             foreach (
                 var turnable in
@@ -270,6 +302,56 @@ namespace Assets.Scripts
                 if (clockwise) turnable.TurnClockwise();
                 else turnable.TurnCounterClockwise();
             }
+        }
+
+        private static bool ActionEnabled()
+        {
+            return !Camera.main.GetComponent<LeapCamControl>().enabled;
+        }
+
+        private void HandleCircleGestureForViewChange(Gesture gesture)
+        {
+            var circle = new CircleGesture(gesture);
+            if (circle.Radius <= circleRadiusChangeViewLimit) return;
+            if (gesture.State != Gesture.GestureState.STATESTOP) return;
+
+            var mondrianContainer = GameObject.Find("MondrianContainer");
+            //TODO Change View
+
+            var camComponent = Camera.main.GetComponent<LeapCamControl>();
+            var mondrianComponent = mondrianContainer.GetComponent<LeapObjectControl>();
+
+            if (!ActionEnabled())
+            {
+                camComponent.enabled = false;
+                mondrianComponent.enabled = true;
+
+                StartCoroutine(MoveCamToOriginPosition(_originCamPosition, mondrianComponent.transform.position, 1));
+            }
+            else
+            {
+                camComponent.enabled = true;
+                mondrianComponent.enabled = false;
+
+                StartCoroutine(MoveCamToOriginPosition(new Vector3(_originCamPosition.x, _originCamPosition.y + 2, _originCamPosition.z), mondrianComponent.transform.position, 1));
+            }
+        }
+
+        static IEnumerator MoveCamToOriginPosition(Vector3 origin, Vector3 directedTo, float time)
+        {
+            var transf = Camera.main.transform;
+            var elapsedTime = 0f;
+            var startingPos = transf.localPosition;
+
+            while (elapsedTime < time)
+            {
+                transf.localPosition = Vector3.Lerp(startingPos, origin, (elapsedTime / time));
+                elapsedTime += Time.deltaTime;
+                transf.LookAt(directedTo);
+                yield return null;
+            }
+            transf.localPosition = origin;
+            transf.LookAt(directedTo);
         }
     }
 }
