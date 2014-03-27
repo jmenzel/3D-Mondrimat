@@ -9,11 +9,13 @@ namespace Assets
 
         private Color[] _supportedColors;
         private uint _colorPointer;
+        private RestartSceneAfterTimeout resetTimer;
 
         private void Start ()
         {
             _supportedColors = new[] { Color.red, Color.yellow, Color.blue, Color.black, Color.white };
             _colorPointer = 0;
+            resetTimer = Camera.main.GetComponent<RestartSceneAfterTimeout>();
             //renderer.material.color = Color.red;
         }
 
@@ -22,18 +24,21 @@ namespace Assets
             //Split Horizontal
             if (Input.GetKey(KeyCode.Y))
             {
+                resetTimer.ResetCounter();
                 SplitHorizontal();
             }
 
             //Split Vertical
             if (Input.GetKey(KeyCode.X))
             {
+                resetTimer.ResetCounter();
                 SplitVertical();
             }
 
             //Change Color
             if (Input.GetKey(KeyCode.C))
             {
+                resetTimer.ResetCounter();
                 ChangeColour();
             }
         }

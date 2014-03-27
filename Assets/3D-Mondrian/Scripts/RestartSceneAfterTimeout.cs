@@ -41,9 +41,36 @@ public class RestartSceneAfterTimeout : MonoBehaviour
         ReloadScene();
     }
 
-    private static void ReloadScene()
+    private void ReloadScene()
     {
         Debug.Log("Reload Scene!");
+
+        foreach (var obj in (GameObject[])FindObjectsOfType(typeof(GameObject)))
+        {
+           SetGravityForGameObject(obj);
+        }
+
+        StartCoroutine(ReloadSceneAfter(10));
+    }
+
+    private static void SetGravityForGameObject(GameObject obj)
+    {
+        if (obj.tag == "NoPhysic") return;
+
+        var rigidbody = obj.GetComponent<Rigidbody>();
+
+        if (rigidbody == null)
+        {
+            rigidbody = obj.AddComponent<Rigidbody>();
+        }
+
+        rigidbody.mass = 1;
+        rigidbody.useGravity = true;
+    }
+
+    IEnumerator ReloadSceneAfter(int seconds)
+    {
+        yield return new WaitForSeconds(seconds);
         Application.LoadLevel("CubeTransforming");
     }
 }
