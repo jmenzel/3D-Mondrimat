@@ -4,6 +4,7 @@ using UnityEngine;
 public class RestartSceneAfterTimeout : MonoBehaviour
 {
     public int TimeInSec = 20;
+    public int GravityFallTime = 7;
 
     private int _counter;
 
@@ -50,7 +51,7 @@ public class RestartSceneAfterTimeout : MonoBehaviour
            SetGravityForGameObject(obj);
         }
 
-        StartCoroutine(ReloadSceneAfter(10));
+        StartCoroutine(ReloadSceneAfter(GravityFallTime));
     }
 
     private static void SetGravityForGameObject(GameObject obj)

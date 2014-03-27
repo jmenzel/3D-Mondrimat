@@ -36,6 +36,7 @@ namespace Assets.Scripts
         private bool runCamChange;
 
         private RestartSceneAfterTimeout resetTimer;
+        public Color highlightColor = Color.cyan;
 
         // Use this for initialization
         private void Start()
@@ -49,14 +50,8 @@ namespace Assets.Scripts
             _originCamPosition = Camera.main.transform.position;
             resetTimer = Camera.main.GetComponent<RestartSceneAfterTimeout>();
 
-//            var config = _leap.Config;
-//            config.SetFloat("Gesture.KeyTap.MinDistance", 2f);
-//            config.SetFloat("Gesture.KeyTap.MinDownVelocity", 20f);
-//            var success = config.Save();
-//            Debug.Log("Save Leap config: " + success);
-
             _leap.EnableGesture(Gesture.GestureType.TYPECIRCLE);
-            _leap.EnableGesture(Gesture.GestureType.TYPEKEYTAP);
+            //_leap.EnableGesture(Gesture.GestureType.TYPEKEYTAP);
             _leap.EnableGesture(Gesture.GestureType.TYPESCREENTAP);
             //_leap.EnableGesture(Gesture.GestureType.TYPESWIPE);
             //_leap.EnableGesture(Gesture.GestureType.TYPEINVALID);
@@ -66,7 +61,7 @@ namespace Assets.Scripts
             _pointer = new[]
             {
                 Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject,
-                Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject
+                //Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject
             };
 
             _registerdCircleHandler = new List<Action<Gesture>>
@@ -86,35 +81,40 @@ namespace Assets.Scripts
 
             //Debug.Log("I Found " + frame.Fingers.Count + " fingers...");
 
-            switch (frame.Fingers.Count)
-            {
-                case 0:
-                    _activeFingerA = null;
-                    //_activeFingerB = null;
-                    break;
-                case 1:
-                    _activeFingerA = _activeFingerA != null ? frame.Finger(_activeFingerA.Id) : frame.Fingers.Frontmost;
-                    _activeFingerB = null;
-                    break;
-                default:
-                    _activeFingerA = _activeFingerA != null ? frame.Finger(_activeFingerA.Id) : frame.Fingers.Frontmost;
-                    //_activeFingerA = _activeFingerA != null ? frame.Finger(_activeFingerA.Id) : frame.Fingers.Rightmost;
-                    //_activeFingerB = _activeFingerB != null ? frame.Finger(_activeFingerB.Id) : frame.Fingers.Leftmost;
-                    break;
-            }
 
-            //Force quit fingers if action disabled
-            if (!ActionEnabled())
+            if (frame.Hands.Count > 1 && frame.Fingers.Count < 6)
+            {
+                if (_activeFingerA != null && frame.Fingers.Count(x => x.Id == _activeFingerA.Id) == 0)
+                    _activeFingerA = null;
+
+                _activeFingerA = (_activeFingerA != null) ? frame.Finger(_activeFingerA.Id) : frame.Fingers.Frontmost;
+
+                foreach (var finger in frame.Fingers.Where(finger => finger.Id != _activeFingerA.Id &&
+                                                                     (finger.TipPosition.ToUnityScaled().x > -2 &&
+                                                                      finger.TipPosition.ToUnityScaled().x < 2) &&
+                                                                     !(_activeFingerA.TipPosition.ToUnityScaled().x > -2 &&
+                                                                       _activeFingerA.TipPosition.ToUnityScaled().x < 2)
+                    ))
+                {
+                    _activeFingerA = finger;
+                }
+
+
+                //Force quit fingers if action disabled
+                if (!ActionEnabled())
+                {
+                    _activeFingerA = null;
+                    // _activeFingerB = null;
+                }
+
+            }
+            else
             {
                 _activeFingerA = null;
             }
 
-
             HandleFinger(_activeFingerA, _pointer[0]);
-
-            //HandleFinger(_activeFingerB, _pointer[1]);
             HandleGestures(frame.Gestures());
-
         }
 
         private void HandleFinger(Finger finger, GameObject pPointer)
@@ -190,7 +190,7 @@ namespace Assets.Scripts
                 _lastHittedObject = newHittedObject;
                 //Debug.Log("I Hit da Cube " + newHittedObject.name + " =): " + newHittedObject + " - " + newHittedObject.tag);
 
-                newHittedObject.renderer.material.color = Color.cyan;
+                newHittedObject.renderer.material.color = highlightColor;
             }
             else
             {
@@ -215,7 +215,7 @@ namespace Assets.Scripts
                         _registerdCircleHandler.ForEach(x => x.Invoke(gesture));
                         break;
                     case Gesture.GestureType.TYPEKEYTAP:
-                        if(ActionEnabled()) HandleKeyTapGesture(gesture);
+                        //if(ActionEnabled()) HandleKeyTapGesture(gesture);
                         break;
                     case Gesture.GestureType.TYPESCREENTAP:
                         if (ActionEnabled()) HandleScreenTapGesture(gesture);
@@ -254,11 +254,15 @@ namespace Assets.Scripts
 
                     if (actionObject.name.ToLower().Contains("vertical"))
                     {
+                        mondrian.ChangeColour(_savedColor);
                         mondrian.SplitVertical();
+                        //mondrian.ChangeColour(highlightColor);
                     }
                     else if (actionObject.name.ToLower().Contains("horizontal"))
                     {
+                        mondrian.ChangeColour(_savedColor);
                         mondrian.SplitHorizontal();
+                        //mondrian.ChangeColour(highlightColor);
                     }
                 }
                 else

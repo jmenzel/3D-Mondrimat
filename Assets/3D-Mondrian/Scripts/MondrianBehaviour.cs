@@ -70,8 +70,8 @@ namespace Assets
             
             o.transform.Translate(Vector3.right * (scale.x / 4));
             o.transform.parent = transform.parent;
-            //o.renderer.material.color = _supportedColors[0];
-            o.renderer.material.color = renderer.material.color;
+            o.renderer.material.color = _supportedColors[0];
+            //o.renderer.material.color = renderer.material.color;
         }
 
         public void SplitHorizontal()
@@ -86,8 +86,8 @@ namespace Assets
             
             o.transform.Translate(Vector3.down * (scale.y / 4));
             o.transform.parent = transform.parent;
-            //o.renderer.material.color = _supportedColors[0];
-            o.renderer.material.color = renderer.material.color;
+            o.renderer.material.color = _supportedColors[0];
+            //o.renderer.material.color = renderer.material.color;
         }
     }
 }
