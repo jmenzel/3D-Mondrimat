@@ -233,50 +233,50 @@ namespace Assets.Scripts
             }
         }
 
-        private void HandleKeyTapGesture(Gesture gesture)
-        {
-            if (gesture.Frame.Fingers.Count < 2) return;
-
-            //Reset Timer
-            resetTimer.ResetCounter();
-
-            var keytap = new KeyTapGesture(gesture);
-            Debug.Log("KeyTap " + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x);
-
-            var right = keytap.Position.x > 0;
-
-            if (_activeFingerA != null && _lastHittedObject != null)
-            {
-                var mondrian = _lastHittedObject.GetComponent<MondrianBehaviour>();
-                if (right)
-                {
-                    var actionObject = GameObject.FindGameObjectWithTag("ActiveAction");
-
-                    if (actionObject.name.ToLower().Contains("vertical"))
-                    {
-                        mondrian.ChangeColour(_savedColor);
-                        mondrian.SplitVertical();
-                        //mondrian.ChangeColour(highlightColor);
-                    }
-                    else if (actionObject.name.ToLower().Contains("horizontal"))
-                    {
-                        mondrian.ChangeColour(_savedColor);
-                        mondrian.SplitHorizontal();
-                        //mondrian.ChangeColour(highlightColor);
-                    }
-                }
-                else
-                {
-                    var colorObject = GameObject.FindGameObjectWithTag("ActiveColor");
-
-                    var color = colorObject.renderer.material.color;
-
-                    mondrian.ChangeColour(color);
-                    _savedColor = color;
-                }
-            }
-
-        }
+//        private void HandleKeyTapGesture(Gesture gesture)
+//        {
+//            if (gesture.Frame.Fingers.Count < 2) return;
+//
+//            //Reset Timer
+//            resetTimer.ResetCounter();
+//
+//            var keytap = new KeyTapGesture(gesture);
+//            Debug.Log("KeyTap " + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x);
+//
+//            var right = keytap.Position.x > 0;
+//
+//            if (_activeFingerA != null && _lastHittedObject != null)
+//            {
+//                var mondrian = _lastHittedObject.GetComponent<MondrianBehaviour>();
+//                if (right)
+//                {
+//                    var actionObject = GameObject.FindGameObjectWithTag("ActiveAction");
+//
+//                    if (actionObject.name.ToLower().Contains("vertical"))
+//                    {
+//                        mondrian.ChangeColour(_savedColor);
+//                        mondrian.SplitVertical();
+//                        //mondrian.ChangeColour(highlightColor);
+//                    }
+//                    else if (actionObject.name.ToLower().Contains("horizontal"))
+//                    {
+//                        mondrian.ChangeColour(_savedColor);
+//                        mondrian.SplitHorizontal();
+//                        //mondrian.ChangeColour(highlightColor);
+//                    }
+//                }
+//                else
+//                {
+//                    var colorObject = GameObject.FindGameObjectWithTag("ActiveColor");
+//
+//                    var color = colorObject.renderer.material.color;
+//
+//                    mondrian.ChangeColour(color);
+//                    _savedColor = color;
+//                }
+//            }
+//
+//        }
 
         private void HandleScreenTapGesture(Gesture gesture)
         {
@@ -299,11 +299,11 @@ namespace Assets.Scripts
 
                     if (actionObject.name.ToLower().Contains("vertical"))
                     {
-                        mondrian.SplitVertical();
+                        mondrian.SplitVertical(_savedColor);
                     }
                     else if (actionObject.name.ToLower().Contains("horizontal"))
                     {
-                        mondrian.SplitHorizontal();
+                        mondrian.SplitHorizontal(_savedColor);
                     }
                 }
                 else

@@ -25,14 +25,14 @@ namespace Assets
             if (Input.GetKey(KeyCode.Y))
             {
                 resetTimer.ResetCounter();
-                SplitHorizontal();
+                SplitHorizontal(_supportedColors[_colorPointer]);
             }
 
             //Split Vertical
             if (Input.GetKey(KeyCode.X))
             {
                 resetTimer.ResetCounter();
-                SplitVertical();
+                SplitVertical(_supportedColors[_colorPointer]);
             }
 
             //Change Color
@@ -58,7 +58,7 @@ namespace Assets
             renderer.material.color = _supportedColors[_colorPointer++];
         }
 
-        public void SplitVertical()
+        public void SplitVertical(Color color)
         {
             var scale = transform.localScale;
 
@@ -70,11 +70,11 @@ namespace Assets
             
             o.transform.Translate(Vector3.right * (scale.x / 4));
             o.transform.parent = transform.parent;
-            o.renderer.material.color = _supportedColors[0];
+            o.renderer.material.color = color;
             //o.renderer.material.color = renderer.material.color;
         }
 
-        public void SplitHorizontal()
+        public void SplitHorizontal(Color color)
         {
             var scale = transform.localScale;
 
@@ -86,7 +86,7 @@ namespace Assets
             
             o.transform.Translate(Vector3.down * (scale.y / 4));
             o.transform.parent = transform.parent;
-            o.renderer.material.color = _supportedColors[0];
+            o.renderer.material.color = color;
             //o.renderer.material.color = renderer.material.color;
         }
     }
