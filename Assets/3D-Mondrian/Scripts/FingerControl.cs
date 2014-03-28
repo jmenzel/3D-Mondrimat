@@ -9,38 +9,29 @@ namespace Assets.Scripts
 {
     public class FingerControl : MonoBehaviour
     {
-
-        private Controller _leap;
         public GameObject pointer;
         public GameObject[] turnables;
-
         public float PointerMaxZ = -10;
         public float PointerMinZ = -6;
         public float PointerYOffset = -9;
-        private float _pointerZOffset;
-        private GameObject _lastHittedObject;
-        private GameObject[] _pointer;
-
         public float circleRadiusChangeViewLimit = 90f;
         public float circleRadiusIgnoreLimit = 40f;
-
-        private Color _savedColor;
-
-        private Finger _activeFingerA = null;
-        private Finger _activeFingerB = null;
-
-        private List<Action<Gesture>> _registerdCircleHandler;
-
-        private Vector3 _originCamPosition;
-
-        private bool runCamChange;
-
-        private RestartSceneAfterTimeout resetTimer;
         public Color highlightColor = Color.cyan;
 
+        
+        private float _pointerZOffset;
+        private GameObject _lastHittedObject;
+        private GameObject _pointer;
+
+        private Controller _leap;
+        private Color _savedColor;
+        private Finger _activeFinger;
+        private List<Action<Gesture>> _registerdCircleHandler;
+        private Vector3 _originCamPosition;
+        private bool _runCamChange;
+        private RestartSceneAfterTimeout _resetTimer;
         private int _lastGestureId = -1;
 
-        // Use this for initialization
         private void Start()
         {
             _leap = new Controller();
@@ -50,21 +41,14 @@ namespace Assets.Scripts
             }
 
             _originCamPosition = Camera.main.transform.position;
-            resetTimer = Camera.main.GetComponent<RestartSceneAfterTimeout>();
+            _resetTimer = Camera.main.GetComponent<RestartSceneAfterTimeout>();
 
             _leap.EnableGesture(Gesture.GestureType.TYPECIRCLE);
-            //_leap.EnableGesture(Gesture.GestureType.TYPEKEYTAP);
             _leap.EnableGesture(Gesture.GestureType.TYPESCREENTAP);
-            //_leap.EnableGesture(Gesture.GestureType.TYPESWIPE);
-            //_leap.EnableGesture(Gesture.GestureType.TYPEINVALID);
 
             _pointerZOffset = pointer.transform.position.z;
 
-            _pointer = new[]
-            {
-                Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject,
-                //Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject
-            };
+            _pointer = Instantiate(pointer, pointer.transform.position, pointer.transform.rotation) as GameObject;
 
             _registerdCircleHandler = new List<Action<Gesture>>
             {
@@ -73,49 +57,41 @@ namespace Assets.Scripts
             };
         }
 
-
-        // Update is called once per frame
         private void FixedUpdate()
         {
             if (_leap == null) return;
 
             var frame = _leap.Frame();
 
-            //Debug.Log("I Found " + frame.Fingers.Count + " fingers...");
-
-
             if (frame.Hands.Count > 1 && frame.Fingers.Count < 6)
             {
-                if (_activeFingerA != null && frame.Fingers.Count(x => x.Id == _activeFingerA.Id) == 0)
-                    _activeFingerA = null;
+                if (_activeFinger != null && frame.Fingers.Count(x => x.Id == _activeFinger.Id) == 0)
+                    _activeFinger = null;
 
-                _activeFingerA = (_activeFingerA != null) ? frame.Finger(_activeFingerA.Id) : frame.Fingers.Frontmost;
+                _activeFinger = (_activeFinger != null) ? frame.Finger(_activeFinger.Id) : frame.Fingers.Frontmost;
 
-                foreach (var finger in frame.Fingers.Where(finger => finger.Id != _activeFingerA.Id &&
+                foreach (var finger in frame.Fingers.Where(finger => finger.Id != _activeFinger.Id &&
                                                                      (finger.TipPosition.ToUnityScaled().x > -2 &&
                                                                       finger.TipPosition.ToUnityScaled().x < 2) &&
-                                                                     !(_activeFingerA.TipPosition.ToUnityScaled().x > -2 &&
-                                                                       _activeFingerA.TipPosition.ToUnityScaled().x < 2)
+                                                                     !(_activeFinger.TipPosition.ToUnityScaled().x > -2 &&
+                                                                       _activeFinger.TipPosition.ToUnityScaled().x < 2)
                     ))
                 {
-                    _activeFingerA = finger;
+                    _activeFinger = finger;
                 }
-
 
                 //Force quit fingers if action disabled
                 if (!ActionEnabled())
                 {
-                    _activeFingerA = null;
-                    // _activeFingerB = null;
+                    _activeFinger = null;
                 }
-
             }
             else
             {
-                _activeFingerA = null;
+                _activeFinger = null;
             }
 
-            HandleFinger(_activeFingerA, _pointer[0]);
+            HandleFinger(_activeFinger, _pointer);
             HandleGestures(frame.Gestures());
         }
 
@@ -136,7 +112,7 @@ namespace Assets.Scripts
                 }
 
                 //Reset Timer
-                resetTimer.ResetCounter();
+                _resetTimer.ResetCounter();
 
                 //Perform action
                 var calcedPos = finger.TipPosition.ToUnityScaled();
@@ -164,9 +140,6 @@ namespace Assets.Scripts
                 {
                     ResetGameObjectColor();
                 }
-
-
-
             }
         }
 
@@ -190,7 +163,6 @@ namespace Assets.Scripts
 
                 _savedColor = newHittedObject.renderer.material.color;
                 _lastHittedObject = newHittedObject;
-                //Debug.Log("I Hit da Cube " + newHittedObject.name + " =): " + newHittedObject + " - " + newHittedObject.tag);
 
                 newHittedObject.renderer.material.color = highlightColor;
             }
@@ -216,9 +188,6 @@ namespace Assets.Scripts
                     case Gesture.GestureType.TYPECIRCLE:
                         _registerdCircleHandler.ForEach(x => x.Invoke(gesture));
                         break;
-                    case Gesture.GestureType.TYPEKEYTAP:
-                        //if(ActionEnabled()) HandleKeyTapGesture(gesture);
-                        break;
                     case Gesture.GestureType.TYPESCREENTAP:
 
                         if (gesture.Id != _lastGestureId && gesture.Id > _lastGestureId)
@@ -227,11 +196,8 @@ namespace Assets.Scripts
                         }
                         _lastGestureId = gesture.Id;
                         break;
-                    case Gesture.GestureType.TYPESWIPE:
-                        //HandleSwipeGesture(gesture);
-                        break;
                     case Gesture.GestureType.TYPEINVALID:
-                        Debug.Log("Invalid");
+                        Debug.Log("Invalid Gesture");
                         break;
                     default:
                         Debug.Log("Bad gesture type");
@@ -246,14 +212,14 @@ namespace Assets.Scripts
             if (gesture.Frame.Fingers.Count < 2) return;
             if (gesture.State != Gesture.GestureState.STATESTOP) return;
             //Reset Timer
-            resetTimer.ResetCounter();
+            _resetTimer.ResetCounter();
 
             var keytap = new ScreenTapGesture(gesture);
-            Debug.Log("ScreenTap ("+gesture.Id+")  IsValuid:" +gesture.IsValid+ " Position" + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x + " - State: " + gesture.State);
+            //Debug.Log("ScreenTap ("+gesture.Id+")  IsValuid:" +gesture.IsValid+ " Position" + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x + " - State: " + gesture.State);
 
             var right = keytap.Position.x > 0;
 
-            if (_activeFingerA != null && _lastHittedObject != null)
+            if (_activeFinger != null && _lastHittedObject != null)
             {
                 var mondrian = _lastHittedObject.GetComponent<MondrianBehaviour>();
                 if (right)
@@ -282,35 +248,19 @@ namespace Assets.Scripts
 
         }
 
-        private static void HandleSwipeGesture(Gesture gesture)
-        {
-            //if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID ||
-            //    gesture.State == Gesture.GestureState.STATEUPDATE) return;
-            //if (gesture.DurationSeconds < 0.10) return;
-
-            if (gesture.State != Gesture.GestureState.STATESTOP) return;
-
-            var swipe = new SwipeGesture(gesture);
-            Debug.Log("Swipe " + swipe.Id + ", " + swipe.State.ToString() + " : " +
-                      ((swipe.StartPosition.x > swipe.Position.x) ? "<<<<<<<<<<" : ">>>>>>>>>>"));
-                //) + swipe.StartPosition.x + " -> " + swipe.Position.x);
-        }
-
         private void HandleCircleGestureForTurnables(Gesture gesture)
         {
             if (!ActionEnabled()) return;
             
             //Reset Timer
-            resetTimer.ResetCounter();
+            _resetTimer.ResetCounter();
 
             var circle = new CircleGesture(gesture);
 
-            //if (circle.Radius > circleRadiusChangeViewLimit) return;
+            if (circle.Radius < circleRadiusIgnoreLimit) return;
             if (gesture.Frame.Hands.Count < 2) return;
-
             if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID)
                 return;
-            if (circle.Radius < circleRadiusIgnoreLimit) return;
 
             var circleCenter = circle.Center.ToUnityScaled();
             var clockwise = (circle.Pointable.Direction.AngleTo(circle.Normal) <= Math.PI/2);
@@ -335,40 +285,20 @@ namespace Assets.Scripts
         private void HandleCircleGestureForViewChange(Gesture gesture)
         {
             //Reset Timer
-            resetTimer.ResetCounter();
+            _resetTimer.ResetCounter();
 
             var circle = new CircleGesture(gesture);
-
-//            if (circle.Frame.Fingers.Count < 3)
-//            {
-//                Debug.Log("Expected Fingers < 3 - actual: " + circle.Frame.Fingers.Count);
-//                return;
-//            }
-            if (circle.Frame.Hands.Count > 1)
-            {
-                //Debug.Log("Expected Hand 1 - actual: " + circle.Frame.Hands.Count);
-                return;
-            }
+            
+            if (circle.Frame.Hands.Count > 1) return;
             if (circle.Radius < circleRadiusChangeViewLimit) return;
-//            if (circle.Radius <= circleRadiusChangeViewLimit)
-//            {
-//                Debug.Log("Expected Radius: " + circleRadiusChangeViewLimit + " <= - actual: " + circle.Radius);
-//                return;
-//            }
-
             if (gesture.State != Gesture.GestureState.STATESTOP) return;
 
-            //Debug.Log("Accepted: Fingers: " + circle.Frame.Fingers.Count + " Hands: " + circle.Frame.Hands.Count + " Radius: " + circle.Radius);
-
-
             var mondrianContainer = GameObject.Find("MondrianContainer");
-
-
             var camComponent = Camera.main.GetComponent<LeapCamControl>();
             var mondrianComponent = mondrianContainer.GetComponent<LeapObjectControl>();
 
             //Run only once at time
-            if (runCamChange) return;
+            if (_runCamChange) return;
 
             if (!ActionEnabled())
             {
@@ -388,7 +318,7 @@ namespace Assets.Scripts
 
         IEnumerator MoveCamToOriginPosition(Vector3 origin, Vector3 directedTo, float time)
         {
-            runCamChange = true;
+            _runCamChange = true;
             var transf = Camera.main.transform;
             var elapsedTime = 0f;
             var startingPos = transf.localPosition;
@@ -402,7 +332,7 @@ namespace Assets.Scripts
             }
             transf.localPosition = origin;
             transf.LookAt(directedTo);
-            runCamChange = false;
+            _runCamChange = false;
         }
     }
 }

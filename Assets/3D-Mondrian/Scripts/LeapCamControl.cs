@@ -5,7 +5,7 @@ using Leap;
 public class LeapCamControl : MonoBehaviour {
 
 
-    Controller m_leapController;
+    Controller _leap;
 
     public GameObject DirectedTo;
     public float MoveSpeed = 0.5f;
@@ -13,25 +13,25 @@ public class LeapCamControl : MonoBehaviour {
     public float SmoothLerpFactor = 0.2f;
     public float CamZoomOffset = 2;
 
-    private RestartSceneAfterTimeout resetTimer;
+    private RestartSceneAfterTimeout _resetTimer;
 
 	// Use this for initialization
 	void Start () 
     {
-        m_leapController = new Controller();
+        _leap = new Controller();
         if (transform == null)
         {
-            Debug.LogError("LeapFly must have a parent object to control");
+            Debug.LogError("Must have a parent object to control");
         }
 
-        resetTimer = Camera.main.GetComponent<RestartSceneAfterTimeout>();
+        _resetTimer = Camera.main.GetComponent<RestartSceneAfterTimeout>();
 	}
 	
 
     void FixedUpdate()
     {
 
-        Frame frame = m_leapController.Frame();
+        var frame = _leap.Frame();
 
         if (frame.Hands.Count >= 2)
         {
@@ -41,30 +41,24 @@ public class LeapCamControl : MonoBehaviour {
             }
 
             //Reset Timer
-            resetTimer.ResetCounter();
+            _resetTimer.ResetCounter();
 
-            Hand leftHand = GetLeftMostHand(frame);
-            Hand rightHand = GetRightMostHand(frame);
+            var leftHand = GetLeftMostHand(frame);
+            var rightHand = GetRightMostHand(frame);
 
-            // takes the average vector of the forward vector of the hands, used for the
-            // pitch of the plane.
             var avgPalmForward = (frame.Hands[0].Direction.ToUnity() + frame.Hands[1].Direction.ToUnity()) * 0.5f;
-
             var handDiff = leftHand.PalmPosition.ToUnityScaled() - rightHand.PalmPosition.ToUnityScaled();
-
             var avgPos = (leftHand.PalmPosition.ToUnityScaled() + rightHand.PalmPosition.ToUnityScaled()) / 2;
-
             var newRot = transform.localRotation.eulerAngles;
+            
             newRot.z = -handDiff.y * 20.0f;
-
-            // adding the rot.z as a way to use banking (rolling) to turn.
             newRot.y += handDiff.z * 3.0f - newRot.z * 0.03f * transform.rigidbody.velocity.magnitude;
             newRot.x = -(avgPalmForward.y - 0.1f) * 100.0f;
 
-            transform.RotateAround(DirectedTo.transform.position, new Vector3(0, 1, 0), newRot.z / 100 * MoveSpeed);   //MoveSpeed * Time.deltaTime);
+            transform.RotateAround(DirectedTo.transform.position, new Vector3(0, 1, 0), newRot.z / 100 * MoveSpeed);
 
             var posY = ((avgPos.y - HandHeightStart) + transform.position.y) / 2;
-            var posZ = transform.position.z;// (handDiff.x + CamZoomOffset + transform.position.z) / 2;
+            var posZ = transform.position.z;
 
             var newPosition = new Vector3(transform.position.x, posY, (posZ));
 
