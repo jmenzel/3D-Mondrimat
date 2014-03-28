@@ -38,6 +38,8 @@ namespace Assets.Scripts
         private RestartSceneAfterTimeout resetTimer;
         public Color highlightColor = Color.cyan;
 
+        private int _lastGestureId = -1;
+
         // Use this for initialization
         private void Start()
         {
@@ -218,7 +220,12 @@ namespace Assets.Scripts
                         //if(ActionEnabled()) HandleKeyTapGesture(gesture);
                         break;
                     case Gesture.GestureType.TYPESCREENTAP:
-                        if (ActionEnabled()) HandleScreenTapGesture(gesture);
+
+                        if (gesture.Id != _lastGestureId && gesture.Id > _lastGestureId)
+                        {
+                            if (ActionEnabled()) HandleScreenTapGesture(gesture);
+                        }
+                        _lastGestureId = gesture.Id;
                         break;
                     case Gesture.GestureType.TYPESWIPE:
                         //HandleSwipeGesture(gesture);
@@ -230,63 +237,19 @@ namespace Assets.Scripts
                         Debug.Log("Bad gesture type");
                         break;
                 }
+
             }
         }
-
-//        private void HandleKeyTapGesture(Gesture gesture)
-//        {
-//            if (gesture.Frame.Fingers.Count < 2) return;
-//
-//            //Reset Timer
-//            resetTimer.ResetCounter();
-//
-//            var keytap = new KeyTapGesture(gesture);
-//            Debug.Log("KeyTap " + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x);
-//
-//            var right = keytap.Position.x > 0;
-//
-//            if (_activeFingerA != null && _lastHittedObject != null)
-//            {
-//                var mondrian = _lastHittedObject.GetComponent<MondrianBehaviour>();
-//                if (right)
-//                {
-//                    var actionObject = GameObject.FindGameObjectWithTag("ActiveAction");
-//
-//                    if (actionObject.name.ToLower().Contains("vertical"))
-//                    {
-//                        mondrian.ChangeColour(_savedColor);
-//                        mondrian.SplitVertical();
-//                        //mondrian.ChangeColour(highlightColor);
-//                    }
-//                    else if (actionObject.name.ToLower().Contains("horizontal"))
-//                    {
-//                        mondrian.ChangeColour(_savedColor);
-//                        mondrian.SplitHorizontal();
-//                        //mondrian.ChangeColour(highlightColor);
-//                    }
-//                }
-//                else
-//                {
-//                    var colorObject = GameObject.FindGameObjectWithTag("ActiveColor");
-//
-//                    var color = colorObject.renderer.material.color;
-//
-//                    mondrian.ChangeColour(color);
-//                    _savedColor = color;
-//                }
-//            }
-//
-//        }
 
         private void HandleScreenTapGesture(Gesture gesture)
         {
             if (gesture.Frame.Fingers.Count < 2) return;
-
+            if (gesture.State != Gesture.GestureState.STATESTOP) return;
             //Reset Timer
             resetTimer.ResetCounter();
 
             var keytap = new ScreenTapGesture(gesture);
-            Debug.Log("KeyTap " + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x);
+            Debug.Log("ScreenTap ("+gesture.Id+")  IsValuid:" +gesture.IsValid+ " Position" + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x + " - State: " + gesture.State);
 
             var right = keytap.Position.x > 0;
 
@@ -383,7 +346,7 @@ namespace Assets.Scripts
 //            }
             if (circle.Frame.Hands.Count > 1)
             {
-                Debug.Log("Expected Hand 1 - actual: " + circle.Frame.Hands.Count);
+                //Debug.Log("Expected Hand 1 - actual: " + circle.Frame.Hands.Count);
                 return;
             }
             if (circle.Radius < circleRadiusChangeViewLimit) return;
@@ -395,7 +358,7 @@ namespace Assets.Scripts
 
             if (gesture.State != Gesture.GestureState.STATESTOP) return;
 
-            Debug.Log("Accepted: Fingers: " + circle.Frame.Fingers.Count + " Hands: " + circle.Frame.Hands.Count + " Radius: " + circle.Radius);
+            //Debug.Log("Accepted: Fingers: " + circle.Frame.Fingers.Count + " Hands: " + circle.Frame.Hands.Count + " Radius: " + circle.Radius);
 
 
             var mondrianContainer = GameObject.Find("MondrianContainer");
