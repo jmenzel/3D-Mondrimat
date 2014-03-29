@@ -14,10 +14,10 @@ namespace Assets.Scripts
         public float PointerMaxZ = -10;
         public float PointerMinZ = -6;
         public float PointerYOffset = -9;
-        public float circleRadiusChangeViewLimit = 90f;
-        public float circleRadiusIgnoreLimit = 40f;
-        public Color highlightColor = Color.cyan;
-
+        public float CircleRadiusChangeViewLimit = 90f;
+        public float CircleRadiusIgnoreLimit = 40f;
+        public Color HighlightColor = Color.cyan;
+        public float ScreenTapDelayLimitInMs = 500;
         
         private float _pointerZOffset;
         private GameObject _lastHittedObject;
@@ -31,6 +31,7 @@ namespace Assets.Scripts
         private bool _runCamChange;
         private RestartSceneAfterTimeout _resetTimer;
         private int _lastGestureId = -1;
+        private float _lastScreenTap;
 
         private void Start()
         {
@@ -39,6 +40,7 @@ namespace Assets.Scripts
             {
                 Debug.LogError("Must have a parent object to control");
             }
+
 
             _originCamPosition = Camera.main.transform.position;
             _resetTimer = Camera.main.GetComponent<RestartSceneAfterTimeout>();
@@ -65,11 +67,14 @@ namespace Assets.Scripts
 
             if (frame.Hands.Count > 1 && frame.Fingers.Count < 6)
             {
+                //is last finger in fingerlist ?
                 if (_activeFinger != null && frame.Fingers.Count(x => x.Id == _activeFinger.Id) == 0)
                     _activeFinger = null;
 
+                //Get last finger again or frontmost as default
                 _activeFinger = (_activeFinger != null) ? frame.Finger(_activeFinger.Id) : frame.Fingers.Frontmost;
 
+                //Switch finger to the finger, which is closer to the mondrian cube
                 foreach (var finger in frame.Fingers.Where(finger => finger.Id != _activeFinger.Id &&
                                                                      (finger.TipPosition.ToUnityScaled().x > -2 &&
                                                                       finger.TipPosition.ToUnityScaled().x < 2) &&
@@ -114,7 +119,7 @@ namespace Assets.Scripts
                 //Reset Timer
                 _resetTimer.ResetCounter();
 
-                //Perform action
+                //Calc position for pointer object - finger representation
                 var calcedPos = finger.TipPosition.ToUnityScaled();
 
                 calcedPos.z = calcedPos.z + _pointerZOffset;
@@ -132,12 +137,14 @@ namespace Assets.Scripts
                 var directionRay = new Ray(pPointer.transform.position, Vector3.forward);
                 //Debug.DrawRay(pPointer.transform.position, Vector3.forward * 10);
 
+                //Check if we point to something
                 if (Physics.Raycast(directionRay, out hit, 10))
                 {
                     HandleRaycastHit(hit);
                 }
                 else
                 {
+                    //No hit - reset highlight color etc
                     ResetGameObjectColor();
                 }
             }
@@ -154,20 +161,25 @@ namespace Assets.Scripts
             }
             if (newHittedObject == _lastHittedObject) return;
 
+            //Just handle the Hover for mondrian cubes
             if (newHittedObject.tag == "MondrianCube")
             {
                 if (_lastHittedObject != null)
                 {
+                    //Reset color of previous object
                     _lastHittedObject.renderer.material.color = _savedColor;
                 }
 
+                //save new color and current object
                 _savedColor = newHittedObject.renderer.material.color;
                 _lastHittedObject = newHittedObject;
 
-                newHittedObject.renderer.material.color = highlightColor;
+                //Set color of current object to highlight color
+                newHittedObject.renderer.material.color = HighlightColor;
             }
             else
             {
+                //The object we hit, is not allowed -> reset last object
                 ResetGameObjectColor();
             }
         }
@@ -189,7 +201,7 @@ namespace Assets.Scripts
                         _registerdCircleHandler.ForEach(x => x.Invoke(gesture));
                         break;
                     case Gesture.GestureType.TYPESCREENTAP:
-
+                        //Filter double fired or old queued Gestures
                         if (gesture.Id != _lastGestureId && gesture.Id > _lastGestureId)
                         {
                             if (ActionEnabled()) HandleScreenTapGesture(gesture);
@@ -203,29 +215,40 @@ namespace Assets.Scripts
                         Debug.Log("Bad gesture type");
                         break;
                 }
-
             }
         }
 
         private void HandleScreenTapGesture(Gesture gesture)
         {
+            //Delay
+            if ((Time.time - _lastScreenTap) <= (ScreenTapDelayLimitInMs / 1000)) return;
+            _lastScreenTap = Time.time;
+
+
             if (gesture.Frame.Fingers.Count < 2) return;
             if (gesture.State != Gesture.GestureState.STATESTOP) return;
             //Reset Timer
             _resetTimer.ResetCounter();
 
-            var keytap = new ScreenTapGesture(gesture);
+            var screenTap = new ScreenTapGesture(gesture);
             //Debug.Log("ScreenTap ("+gesture.Id+")  IsValuid:" +gesture.IsValid+ " Position" + ((keytap.Position.x > 0) ? "right" : "left") + " - " + keytap.Position.x + " - State: " + gesture.State);
 
-            var right = keytap.Position.x > 0;
+            //on wich side was the tap?
+            var right = screenTap.Position.x > 0;
 
+            //Just handle the tap, if we have a selected object and a pointer finger
             if (_activeFinger != null && _lastHittedObject != null)
             {
+                //Get the mondrianBehaviour component
                 var mondrian = _lastHittedObject.GetComponent<MondrianBehaviour>();
+
+                //Right side? -> Split action
                 if (right)
                 {
+                    //Get the setted Action
                     var actionObject = GameObject.FindGameObjectWithTag("ActiveAction");
 
+                    //And fire action
                     if (actionObject.name.ToLower().Contains("vertical"))
                     {
                         mondrian.SplitVertical(_savedColor);
@@ -235,13 +258,17 @@ namespace Assets.Scripts
                         mondrian.SplitHorizontal(_savedColor);
                     }
                 }
+                //Left side? -> Color change action
                 else
                 {
+                    //Get the setted Color 
                     var colorObject = GameObject.FindGameObjectWithTag("ActiveColor");
-
                     var color = colorObject.renderer.material.color;
 
+                    //And set the new Color
                     mondrian.ChangeColour(color);
+
+                    //overwrite saved color
                     _savedColor = color;
                 }
             }
@@ -257,14 +284,22 @@ namespace Assets.Scripts
 
             var circle = new CircleGesture(gesture);
 
-            if (circle.Radius < circleRadiusIgnoreLimit) return;
+            //No mini circles
+            if (circle.Radius < CircleRadiusIgnoreLimit) return;
+
+            //Only with two hands - we are in action mode ;)
             if (gesture.Frame.Hands.Count < 2) return;
+
+            //Just Stop and Update events allowed
             if (gesture.State == Gesture.GestureState.STATESTART || gesture.State == Gesture.GestureState.STATEINVALID)
                 return;
 
             var circleCenter = circle.Center.ToUnityScaled();
+
+            //calc the direction of the circle
             var clockwise = (circle.Pointable.Direction.AngleTo(circle.Normal) <= Math.PI/2);
 
+            //For all registered turnables wich are in the right position
             foreach (
                 var turnable in
                     turnables.Select(x => x.GetComponent(typeof (ITurnable)))
@@ -272,6 +307,7 @@ namespace Assets.Scripts
                         .Cast<ITurnable>()
                         .Where(turnable => turnable.InRange(circleCenter)))
             {
+                //Turn =)
                 if (clockwise) turnable.TurnClockwise();
                 else turnable.TurnCounterClockwise();
             }
@@ -289,10 +325,15 @@ namespace Assets.Scripts
 
             var circle = new CircleGesture(gesture);
             
+            //Just one hand - we handle view mode
             if (circle.Frame.Hands.Count > 1) return;
-            if (circle.Radius < circleRadiusChangeViewLimit) return;
+
+            //if (circle.Radius < CircleRadiusChangeViewLimit) return;
+            
+            //Just stop events
             if (gesture.State != Gesture.GestureState.STATESTOP) return;
 
+            //Get the needed components
             var mondrianContainer = GameObject.Find("MondrianContainer");
             var camComponent = Camera.main.GetComponent<LeapCamControl>();
             var mondrianComponent = mondrianContainer.GetComponent<LeapObjectControl>();
@@ -300,18 +341,23 @@ namespace Assets.Scripts
             //Run only once at time
             if (_runCamChange) return;
 
+            //Are we in view or in action mode?
             if (!ActionEnabled())
             {
+                //Back to action mode
                 camComponent.enabled = false;
                 mondrianComponent.enabled = true;
-
+                
+                //Reset Cam position
                 StartCoroutine(MoveCamToOriginPosition(_originCamPosition, mondrianComponent.transform.position, 1));
             }
             else
             {
+                //Lets go into view mode
                 camComponent.enabled = true;
                 mondrianComponent.enabled = false;
 
+                //Move cam a little up to signal view mode
                 StartCoroutine(MoveCamToOriginPosition(new Vector3(_originCamPosition.x, _originCamPosition.y + 2, _originCamPosition.z), mondrianComponent.transform.position, 1));
             }
         }
